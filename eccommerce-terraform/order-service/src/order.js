@@ -46,11 +46,11 @@ app.get('/orders/:userId', async (req, res) => {
 // API URLs
 const CART_SERVICE_URL =
   process.env.CART_SERVICE_URL ||
-  'https://5q15zd43h1.execute-api.ap-southeast-1.amazonaws.com';
+  'https://hmc6vv0vv2.execute-api.ap-southeast-1.amazonaws.com';
 
 const PRODUCT_SERVICE_URL =
   process.env.PRODUCT_SERVICE_URL ||
-  'https://5q15zd43h1.execute-api.ap-southeast-1.amazonaws.com';
+  'https://hmc6vv0vv2.execute-api.ap-southeast-1.amazonaws.com';
 
 // Create order
 app.post('/orders', async (req, res) => {

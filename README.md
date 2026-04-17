@@ -137,7 +137,7 @@ All infrastructure is defined and deployed using **Terraform**, split into separ
 ```
 ecommerce-project/
 │
-├── ecommerce-terraform/          # Backend infrastructure
+├── eccommerce-terraform/          # Backend infrastructure
 │   ├── product-service/          # Product Lambda function & config
 │   ├── cart-service/             # Cart Lambda function & config
 │   ├── order-service/            # Order Lambda function & config
@@ -202,7 +202,7 @@ This deploys all Lambda functions, API Gateway, DynamoDB tables, and the monitor
 **Step 1 — Navigate to the backend folder:**
 
 ```bash
-cd ecommerce-terraform
+cd eccommerce-terraform
 ```
 
 **Step 2 — Initialize Terraform:**
