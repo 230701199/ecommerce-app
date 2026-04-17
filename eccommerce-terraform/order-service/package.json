@@ -1,0 +1,21 @@
+{
+  "name": "order-service",
+  "version": "1.0.0",
+  "main": "src/order.js",
+  "scripts": {
+    "dev": "nodemon src/order.js",
+    "start": "node src/order.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.1693.0",
+    "axios": "^1.14.0",
+    "express": "^4.21.2",
+    "jest": "^30.3.0",
+    "serverless-http": "^4.0.0",
+    "supertest": "^7.2.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

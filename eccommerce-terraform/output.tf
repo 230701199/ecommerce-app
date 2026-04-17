@@ -14,3 +14,6 @@ output "cart_endpoint" {
 output "order_endpoint" {
   value = "${aws_apigatewayv2_api.api.api_endpoint}/orders"
 }
+output "sns_topic_arn" {
+  value = aws_sns_topic.alerts.arn
+}
