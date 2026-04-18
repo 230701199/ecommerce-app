@@ -1,8 +1,16 @@
-# 🛒 Serverless E-Commerce Application
+# 🛒Nexmart -- Serverless E-Commerce Application
 
 > A fully serverless, microservices-based e-commerce platform built on AWS —  
 > featuring product management, cart handling, and order processing,  
 > with infrastructure fully managed via Terraform.
+
+---
+## 🌐 Live Demo
+
+| Service      | Endpoint |
+|-------------|---------|
+| Frontend    | https://d1s7iavqzkz41n.cloudfront.net/ |
+| API Gateway | https://hmc6vv0vv2.execute-api.ap-southeast-1.amazonaws.com |
 
 ---
 
