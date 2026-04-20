@@ -423,6 +423,8 @@ test-user
 
 ### 🚀 How to Run
 
+> ⚠️ Use Git Bash or any Unix-based terminal (Linux / WSL)
+
 ```bash
 chmod +x smoke-test.sh
 ./smoke-test.sh
