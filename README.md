@@ -162,6 +162,7 @@ ecommerce-project/
 │   ├── variable.tf               # Frontend variables
 │   └── output.tf                 # CloudFront URL output
 │
+├── smoke-test.sh                 # End-to-end smoke testing script
 ├── .gitignore
 └── README.md
 ```
