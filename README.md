@@ -63,7 +63,7 @@ All infrastructure is defined and deployed using **Terraform**, split into separ
                  ▼                                      ▼
   ┌──────────────────────────┐          ┌───────────────────────────┐
   │     Amazon S3            │          │      API Gateway          │
-  │  (HTML · CSS · JS)       │          │   (REST API Endpoints)    │
+  │  (HTML · CSS · JS)       │          │   (HTTP API Endpoints)    │
   └──────────────────────────┘          └───────────┬───────────────┘
                                                     │
                      ┌──────────────────────────────┼──────────────────────────────┐
@@ -115,7 +115,7 @@ All infrastructure is defined and deployed using **Terraform**, split into separ
 | Technology | Purpose |
 |---|---|
 | AWS Lambda | Serverless compute for all microservices |
-| Amazon API Gateway | REST API routing and request handling |
+| Amazon API Gateway | HTTP API routing and request handling |
 | Amazon DynamoDB | NoSQL database for products, carts, and orders |
 | Node.js | Lambda function runtime |
 | Terraform | Backend infrastructure provisioning |
@@ -375,6 +375,61 @@ The project includes a browser-based **UI Test Panel** for testing the live depl
 5. HTTP response codes and results are displayed inline for each test.
 
 > ⚠️ Integration tests run against real AWS resources. The backend must be deployed before running them.
+
+---
+
+### 🧪 Smoke Testing (End-to-End Validation)
+
+This project includes a **shell-based smoke test script** to verify that all core services are working correctly after deployment.
+
+---
+
+### 🎯 Purpose
+
+The smoke test validates the complete workflow of the application:
+
+- Product creation  
+- Cart operations  
+- Order processing  
+- Service-to-service integration  
+
+---
+
+### ⚙️ What the Script Does
+
+The script performs the following steps:
+
+1. Clears existing cart for test user  
+2. Fetches products (API availability check)  
+3. Creates a new product  
+4. Retrieves product by ID  
+5. Adds product to cart  
+6. Validates cart contents  
+7. Creates an order  
+8. Deletes the test product (cleanup)  
+
+---
+
+### 👤 Test User
+
+To avoid affecting real user data, the script uses:
+
+
+test-user
+
+
+---
+
+### 🚀 How to Run
+
+```bash
+chmod +x smoke-test.sh
+./smoke-test.sh
+✅ Expected Output
+Status: 200
+Status: 201
+...
+🚀 Smoke Test Completed
 
 ---
 
