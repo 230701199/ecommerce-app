@@ -1644,6 +1644,11 @@ select:focus {
       <input type="text" id="edit-modal-description" placeholder="e.g. High quality wireless headphones" />
     </div>
 
+    <div class="modal-field">
+      <label>Discount (%)</label>
+      <input type="number" id="edit-modal-discount" min="0" max="100" />
+    </div>
+
     <div class="modal-actions">
       <button class="btn-modal-update" onclick="submitEditProduct()"><span>✅ Update Product</span></button>
       <button class="btn-modal-cancel" onclick="closeEditModal()">Cancel</button>
@@ -1760,7 +1765,7 @@ select:focus {
 </main>
 
 <script>
-const API = "https://hmc6vv0vv2.execute-api.ap-southeast-1.amazonaws.com";
+const API = "https://o8kqf93jnf.execute-api.ap-southeast-1.amazonaws.com";
 const USER_ID = "u1";
 
 let ALL_PRODUCTS = [];
@@ -1856,7 +1861,14 @@ function renderProducts(products) {
       <span class="card-emoji">${getEmoji(p.category)}</span>
       ${p.category ? `<span class="card-category">${p.category}</span>` : ""}
       <h3>${p.name}</h3>
-      <div class="card-price">₹${p.price}</div>
+      <div class="card-price">
+        ${
+         p.discount > 0
+           ? `₹${p.finalPrice} <span style="text-decoration:line-through; font-size:14px; color:#888;">₹${p.price}</span>
+            <div style="color:#00ffcc; font-size:14px;">${p.discount}% OFF</div>`
+          : `₹${p.price}`
+       }
+</div>
       ${stockBadge}
       ${cartBtn}
       ${isAdmin ? `
@@ -2075,7 +2087,7 @@ async function submitProduct() {
   const category = document.getElementById("modal-category").value.trim();
   const stock = Number(document.getElementById("modal-stock").value);
   const description = document.getElementById("modal-description").value.trim();
-
+  
   if (!name || !price || !category) {
     showAlert("Please fill in all fields", "error");
     return;
@@ -2121,6 +2133,7 @@ function editProduct(id) {
   document.getElementById("edit-modal-category").value = p.category || "";
   document.getElementById("edit-modal-stock").value = p.stock !== undefined ? p.stock : "";
   document.getElementById("edit-modal-description").value = p.description || "";
+  document.getElementById("edit-modal-discount").value = p.discount || 0;
 
   document.getElementById("edit-modal-overlay").classList.add("open");
   setTimeout(() => document.getElementById("edit-modal-name").focus(), 100);
@@ -2143,7 +2156,7 @@ async function submitEditProduct() {
   const category = document.getElementById("edit-modal-category").value.trim();
   const stock = Number(document.getElementById("edit-modal-stock").value);
   const description = document.getElementById("edit-modal-description").value.trim();
-
+  const discount = document.getElementById("edit-modal-discount").value;
   if (!name || !price || !category) {
     showAlert("Please fill in all required fields", "error");
     return;
@@ -2155,7 +2168,7 @@ async function submitEditProduct() {
       "Content-Type": "application/json",
       "role": "admin"
     },
-    body: JSON.stringify({ name, price, category, stock, description })
+    body: JSON.stringify({ name, price, category, stock, description,discount: Number(discount || 0) })
   });
 
   closeEditModal();

@@ -19,7 +19,7 @@ const addProduct = asyncHandler(async (req, res) => {
     throw new Error("Only admin allowed");
   }
 
-  const { name, description, price, stock, category } = req.body;
+  const { name, description, price, stock, category,discount } = req.body;
 
   if (!name || !price || !category) {
     res.status(400);
@@ -33,6 +33,7 @@ const addProduct = asyncHandler(async (req, res) => {
     price: Number(price),
     stock: Number(stock || 0),
     category,
+    discount: Number(discount || 0),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
@@ -57,7 +58,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
   }).promise();
 
   return res.json({
-    data: result.Items || [],
+    data: (result.Items || []).map(p => ({
+  ...p,
+  finalPrice: p.price * (1 - (p.discount || 0) / 100)
+})),
     meta: { storage: 'dynamodb' }
   });
 });
@@ -78,10 +82,15 @@ const getProductById = asyncHandler(async (req, res) => {
     throw new Error('Product not found');
   }
 
-  return res.json({
-    data: result.Item,
-    meta: { storage: 'dynamodb' }
-  });
+ const product = result.Item;
+
+return res.json({
+  data: {
+    ...product,
+    finalPrice: product.price * (1 - (product.discount || 0) / 100)
+  },
+  meta: { storage: 'dynamodb' }
+});
 });
 
 
@@ -117,7 +126,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 
   const id = Number(req.params.id);
-  const { stock, price, name, category, description } = req.body;
+  const { stock, price, name, category, description,discount } = req.body;
 
   const updateExp = [];
   const values = {};
@@ -152,12 +161,18 @@ const updateProduct = asyncHandler(async (req, res) => {
     values[":d"] = description;
     names["#description"] = "description";
   }
+  if (discount !== undefined) {
+  updateExp.push("#discount = :dsc");
+  values[":dsc"] = Number(discount);
+  names["#discount"] = "discount";
+}
 
   // ❗ prevent empty update crash
   if (updateExp.length === 0) {
     res.status(400);
     throw new Error("No fields to update");
   }
+   
 
   // always update timestamp
   updateExp.push("#updatedAt = :u");

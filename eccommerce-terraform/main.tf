@@ -36,7 +36,7 @@ resource "aws_lambda_function" "product_service" {
   handler       = "src/server.handler"
   runtime       = "nodejs18.x"
   role          = aws_iam_role.lambda_exec_role.arn
-  source_code_hash = filebase64sha256(var.product_zip)
+ source_code_hash = filebase64sha256(var.product_zip)
 }
 
 resource "aws_lambda_function" "cart_service" {
@@ -50,7 +50,7 @@ resource "aws_lambda_function" "cart_service" {
 
 resource "aws_lambda_function" "order_service" {
   function_name = "${var.project_name}-order-service"
-  filename      = var.order_zip
+  filename = var.order_zip
   handler       = "src/server.handler"
   runtime       = "nodejs18.x"
   role          = aws_iam_role.lambda_exec_role.arn
