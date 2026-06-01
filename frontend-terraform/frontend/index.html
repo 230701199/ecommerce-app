@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Commerce App</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-n">N</span>EXM<span class="logo-x">A</span>RT<span class="logo-dot"></span>
+  </div>
+  <div class="nav-buttons">
+    <button onclick="showProducts()" id="nav-products" class="active-nav">🛍️ Products</button>
+    <button onclick="showCart()" id="nav-cart">🛒 Cart</button>
+    <button onclick="showOrders()" id="nav-orders">📦 Orders</button>
+    <button onclick="enableAdmin()">👑 Admin</button>
+    <button onclick="disableAdmin()">👤 User</button>
+    <!-- ===== TEST FEATURE START ===== -->
+    <button onclick="showTest()" id="nav-test">🧪 Test</button>
+    <!-- ===== TEST FEATURE END ===== -->
+  </div>
+</header>
+
+<div id="alert-box"></div>
+
+<!-- ADD PRODUCT MODAL -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="modal-box">
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+    <h3>➕ ADD PRODUCT</h3>
+    <p class="modal-subtitle">// fill in the details to list a new product</p>
+
+    <div class="modal-field">
+      <label>Product Name</label>
+      <input type="text" id="modal-name" placeholder="e.g. Wireless Headphones" />
+    </div>
+
+    <div class="modal-field">
+      <label>Price (₹)</label>
+      <input type="number" id="modal-price" placeholder="e.g. 1999" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Category</label>
+      <input type="text" id="modal-category" placeholder="e.g. Electronics" />
+    </div>
+
+    <div class="modal-field">
+      <label>Stock</label>
+      <input type="number" id="modal-stock" placeholder="e.g. 10" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Description</label>
+      <input type="text" id="modal-description" placeholder="e.g. High quality wireless headphones" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-modal-submit" onclick="submitProduct()"><span>🚀 Add Product</span></button>
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PRODUCT MODAL -->
+<div id="edit-modal-overlay" onclick="handleEditOverlayClick(event)">
+  <div id="edit-modal-box">
+    <button class="btn-modal-close" onclick="closeEditModal()">✕</button>
+    <h3>✏️ EDIT PRODUCT</h3>
+    <p class="modal-subtitle">// update the details for this product</p>
+
+    <div class="modal-field">
+      <label>Product Name</label>
+      <input type="text" id="edit-modal-name" placeholder="e.g. Wireless Headphones" />
+    </div>
+
+    <div class="modal-field">
+      <label>Price (₹)</label>
+      <input type="number" id="edit-modal-price" placeholder="e.g. 1999" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Category</label>
+      <input type="text" id="edit-modal-category" placeholder="e.g. Electronics" />
+    </div>
+
+    <div class="modal-field">
+      <label>Stock</label>
+      <input type="number" id="edit-modal-stock" placeholder="e.g. 10" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Description</label>
+      <input type="text" id="edit-modal-description" placeholder="e.g. High quality wireless headphones" />
+    </div>
+
+    <div class="modal-field">
+      <label>Discount (%)</label>
+      <input type="number" id="edit-modal-discount" min="0" max="100" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-modal-update" onclick="submitEditProduct()"><span>✅ Update Product</span></button>
+      <button class="btn-modal-cancel" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- PRODUCTS -->
+<div id="products-section" class="section active">
+
+  <div class="promo-banner">
+    <div>
+      <h2>🔥 HOT DEALS THIS WEEK</h2>
+      <p>Discover amazing products at unbeatable prices</p>
+    </div>
+    <div class="promo-badge">UP TO 50% OFF</div>
+  </div>
+
+  <div class="toolbar">
+    <h2 class="section-title">All <span class="accent">Products</span></h2>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button id="add-product-btn" onclick="openModal()">➕ Add Product</button>
+      <select id="categoryFilter" onchange="filterCategory(this.value)">
+        <option value="all">All Categories</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="loader">
+    <p>// Fetching awesome products...</p>
+    <div class="spinner"></div>
+  </div>
+  <div id="product-grid"></div>
+</div>
+
+<!-- CART -->
+<div id="cart-section" class="section">
+  <div class="toolbar">
+    <h2 class="section-title">Your <span class="accent">Cart</span></h2>
+  </div>
+  <div id="cart"></div>
+</div>
+
+<!-- ORDERS -->
+<div id="orders-section" class="section">
+  <div class="toolbar">
+    <h2 class="section-title">Order <span class="accent">History</span></h2>
+  </div>
+  <div id="orders"></div>
+</div>
+
+<!-- ===== TEST FEATURE START ===== -->
+<div id="test-section" class="section">
+
+  <div class="toolbar">
+    <h2 class="section-title">🧪 Test <span class="accent">Panel</span></h2>
+  </div>
+
+  <div class="test-run-all-wrap">
+    <button id="btn-run-all" onclick="runAllTests()"><span>🚀 Run All Tests</span></button>
+    <button id="btn-clear-output" onclick="clearOutput()">🗑 Clear Output</button>
+    <div id="test-loading">
+      <div class="test-spinner"></div>
+      <span>Running tests...</span>
+    </div>
+  </div>
+
+  <div class="test-grid">
+
+    <div class="test-group products">
+      <div class="test-group-title">🛍 Product Tests</div>
+      <div class="test-buttons">
+        <button class="btn-test purple" onclick="testCreateProduct()">➕ Create Test Product</button>
+        <button class="btn-test purple" onclick="testGetProducts()">📋 Get All Products</button>
+      </div>
+    </div>
+
+    <div class="test-group cart">
+      <div class="test-group-title">🛒 Cart Tests</div>
+      <div class="test-buttons">
+        <button class="btn-test teal" onclick="testAddToCart()">➕ Add to Cart</button>
+        <button class="btn-test teal" onclick="testGetCart()">📋 Get Cart</button>
+      </div>
+    </div>
+
+    <div class="test-group orders">
+      <div class="test-group-title">📦 Order Tests</div>
+      <div class="test-buttons">
+        <button class="btn-test pink" onclick="testPlaceOrder()">🚀 Place Order</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="test-summary" id="test-summary" style="display:none;"></div>
+
+  <div class="test-output-wrap">
+    <div class="test-output-header">
+      <div class="test-output-header-left">
+        <span class="test-dot red"></span>
+        <span class="test-dot yellow"></span>
+        <span class="test-dot green"></span>
+      </div>
+      <span class="test-output-label">Test Output</span>
+    </div>
+    <pre id="test-output">// Run a test or click "Run All Tests" to see output here...</pre>
+  </div>
+
+</div>
+<!-- ===== TEST FEATURE END ===== -->
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

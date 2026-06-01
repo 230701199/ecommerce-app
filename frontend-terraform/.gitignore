@@ -1,6 +1,7 @@
 .terraform/
-.terraform.lock.hcl
+terraform/.terraform/
+
 terraform.tfstate
 terraform.tfstate.backup
-*.zip
-node_modules/
+
+**/node_modules/

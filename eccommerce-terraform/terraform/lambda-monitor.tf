@@ -42,8 +42,8 @@ resource "aws_lambda_function" "monitor" {
   runtime = "nodejs18.x"
   handler = "lambda-monitor.handler"
 
-  filename         = "lambda-monitor.zip"
-  source_code_hash = filebase64sha256("lambda-monitor.zip")
+  filename         = "${path.root}/../lambda-monitor.zip"
+  source_code_hash = filebase64sha256("${path.root}/../lambda-monitor.zip")
 
   role = aws_iam_role.lambda_role.arn
 }
