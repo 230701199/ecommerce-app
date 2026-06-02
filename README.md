@@ -143,26 +143,41 @@ All infrastructure is defined and deployed using **Terraform**, split into separ
 ## 📁 Project Structure
 
 ```
-ecommerce-project/
+ecommerce-app/
 │
-├── eccommerce-terraform/          # Backend infrastructure
-│   ├── product-service/          # Product Lambda function & config
-│   ├── cart-service/             # Cart Lambda function & config
-│   ├── order-service/            # Order Lambda function & config
-│   ├── main.tf                   # Root backend module
-│   ├── variable.tf               # Input variable definitions
-│   ├── output.tf                 # Output values (API URL, table names)
-│   ├── cloudwatch.tf             # CloudWatch log groups & alarms
-│   └── lambda-monitor.tf         # Monitoring Lambda + SNS + Route 53
+├── eccommerce-terraform/                # Backend services
+│   ├── product-service/                 # Product Lambda source code
+│   ├── cart-service/                    # Cart Lambda source code
+│   ├── order-service/                   # Order Lambda source code
+│   │
+│   ├── build/                           # Auto-generated Lambda ZIP files
+│   │
+│   └── terraform/                       # Backend Terraform configuration
+│       ├── provider.tf                  # AWS provider configuration
+│       ├── lambda.tf                    # Lambda functions & packaging
+│       ├── dynamodb.tf                  # DynamoDB tables
+│       ├── api-gateway.tf               # API Gateway resources
+│       ├── iam.tf                       # IAM roles & policies
+│       ├── permissions.tf               # Lambda permissions
+│       ├── cloudwatch.tf                # CloudWatch resources
+│       ├── monitor.tf                   # Monitoring configuration
+│       ├── lambda-monitor.tf            # Monitoring Lambda
+│       ├── variable.tf                  # Input variables
+│       └── output.tf                    # Terraform outputs
 │
-├── frontend-terraform/           # Frontend infrastructure
-│   ├── index.html                # Main frontend application file
-│   ├── main.tf                   # S3 bucket configuration
-│   ├── cloudfront.tf             # CloudFront distribution
-│   ├── variable.tf               # Frontend variables
-│   └── output.tf                 # CloudFront URL output
+├── frontend-terraform/                  # Frontend infrastructure
+│   ├── frontend/                        # Frontend source files
+│   │   ├── index.html                   # Main application page
+│   │   ├── styles.css                   # Application styling
+│   │   └── app.js                       # Frontend business logic
+│   │
+│   └── terraform/                       # Frontend Terraform configuration
+│       ├── main.tf                      # S3 bucket configuration
+│       ├── cloudfront.tf                # CloudFront distribution
+│       ├── variable.tf                  # Frontend variables
+│       └── output.tf                    # CloudFront outputs
 │
-├── smoke-test.sh                 # End-to-end smoke testing script
+├── smoke-test.sh                        # End-to-end smoke testing script
 ├── .gitignore
 └── README.md
 ```
@@ -211,7 +226,7 @@ This deploys all Lambda functions, API Gateway, DynamoDB tables, and the monitor
 **Step 1 — Navigate to the backend folder:**
 
 ```bash
-cd eccommerce-terraform
+cd eccommerce-terraform/terraform
 ```
 
 **Step 2 — Initialize Terraform:**
@@ -261,7 +276,7 @@ const API_BASE_URL = "https://abc123.execute-api.us-east-1.amazonaws.com/prod";
 **Step 2 — Navigate to the frontend folder:**
 
 ```bash
-cd ../frontend-terraform
+cd frontend-terraform/terraform
 ```
 
 **Step 3 — Initialize Terraform:**
@@ -310,11 +325,11 @@ To remove all AWS resources and stop incurring charges:
 
 ```bash
 # Destroy frontend first
-cd frontend-terraform
+cd frontend-terraform/terraform
 terraform destroy
 
 # Then destroy backend
-cd ../ecommerce-terraform
+cd ../../eccommerce-terraform/terraform
 terraform destroy
 ```
 
