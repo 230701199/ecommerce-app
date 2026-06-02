@@ -1,6 +1,6 @@
 #!/bin/bash
 
-API_URL="https://hmc6vv0vv2.execute-api.ap-southeast-1.amazonaws.com"
+API_URL="https://o8kqf93jnf.execute-api.ap-southeast-1.amazonaws.com"
 USER_ID="test-user"
 
 echo "🔍 Running Smoke Tests..."

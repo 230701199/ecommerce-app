@@ -9,8 +9,8 @@
 
 | Service      | Endpoint |
 |-------------|---------|
-| Frontend    | https://d1s7iavqzkz41n.cloudfront.net/ |
-| API Gateway | https://hmc6vv0vv2.execute-api.ap-southeast-1.amazonaws.com |
+| Frontend    | https://d32dvut05ll57l.cloudfront.net/ |
+| API Gateway | https://o8kqf93jnf.execute-api.ap-southeast-1.amazonaws.com |
 
 ---
 
