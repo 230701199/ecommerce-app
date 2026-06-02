@@ -1525,6 +1525,95 @@ select:focus {
 .test-badge.fail  { background: rgba(252,165,165,0.12); border: 1px solid rgba(252,165,165,0.4); color: #fca5a5; }
 .test-badge.total { background: rgba(196,181,253,0.12); border: 1px solid rgba(196,181,253,0.35); color: #c4b5fd; }
 
+/* ===== COGNITO AUTH STYLES START ===== */
+.auth-btn {
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid rgba(138,43,226,0.3);
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.auth-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(180,0,255,0.14), rgba(255,30,86,0.1));
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.auth-btn:hover {
+  border-color: var(--border-glow);
+  color: var(--text-primary);
+  box-shadow: 0 0 14px rgba(180,0,255,0.22);
+}
+
+.auth-btn:hover::before { opacity: 1; }
+
+.auth-login {
+  background: rgba(0,255,204,0.12);
+  border-color: rgba(0,255,204,0.45);
+  color: #60f5d0;
+}
+
+.auth-login:hover {
+  background: rgba(0,255,204,0.2);
+  border-color: #00ffcc;
+  color: #a0fff0;
+  box-shadow: var(--glow-cyan);
+}
+
+.auth-logout {
+  background: rgba(255,30,86,0.12);
+  border-color: rgba(255,30,86,0.45);
+  color: #ff7096;
+}
+
+.auth-logout:hover {
+  background: rgba(255,30,86,0.22);
+  border-color: var(--neon-red);
+  color: #ffb3c2;
+  box-shadow: var(--glow-red);
+}
+
+.user-info {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+}
+
+.user-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #70e8ff;
+  letter-spacing: 0.5px;
+}
+
+.user-email {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.3px;
+}
+/* ===== COGNITO AUTH STYLES END ===== */
+
 /* ─── RESPONSIVE ─── */
 @media (max-width: 768px) {
   header  { padding: 0 16px; }

@@ -1,5 +1,17 @@
 const API = "https://o8kqf93jnf.execute-api.ap-southeast-1.amazonaws.com";
-const USER_ID = "u1";
+function getUserId() {
+  const user = getCurrentUser();
+  return user?.sub || "guest";
+}
+
+/* ===== COGNITO AUTH CONFIG START ===== */
+const COGNITO_DOMAIN = "https://ap-southeast-1pwak67usw.auth.ap-southeast-1.amazoncognito.com";
+const COGNITO_CLIENT_ID = "2qv50999jltmlrfm3tria2kqcf";
+const COGNITO_REDIRECT_URI = "https://d32dvut05ll57l.cloudfront.net";
+const COGNITO_SCOPES = "openid profile email";
+const COGNITO_STORAGE_KEY = "cognito_tokens";
+let currentUser = null;
+/* ===== COGNITO AUTH CONFIG END ===== */
 
 let ALL_PRODUCTS = [];
 let EDIT_PRODUCT_ID = null;
@@ -9,6 +21,267 @@ const CATEGORY_EMOJIS = {
   books: "📚", food: "🍕", beauty: "💄", sports: "🏃", toys: "🎮",
   home: "🏠", garden: "🌿", health: "💊", default: "✨"
 };
+
+/* ===== COGNITO AUTH HELPERS START ===== */
+function generateCodeVerifier() {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  let result = '';
+  for (let i = 0; i < 128; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return result;
+}
+
+function generateState() {
+  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 32; i++) {
+    result += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  return result;
+}
+
+async function sha256(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return new Uint8Array(hashBuffer);
+}
+
+function base64UrlEncode(uint8array) {
+  const binaryString = String.fromCharCode.apply(null, uint8array);
+  return btoa(binaryString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+async function generateCodeChallenge(verifier) {
+  const hash = await sha256(verifier);
+  return base64UrlEncode(hash);
+}
+
+function decodeJwt(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) throw new Error("Invalid JWT");
+    const payload = parts[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
+  } catch (err) {
+    console.error("JWT decode error:", err);
+    return null;
+  }
+}
+
+function isTokenExpired(token) {
+  const payload = decodeJwt(token);
+  if (!payload || !payload.exp) return true;
+  return Date.now() >= payload.exp * 1000;
+}
+
+function isAuthenticated() {
+  const tokenStr = localStorage.getItem(COGNITO_STORAGE_KEY);
+  if (!tokenStr) return false;
+  try {
+    const tokens = JSON.parse(tokenStr);
+    return tokens.id_token && !isTokenExpired(tokens.id_token);
+  } catch {
+    return false;
+  }
+}
+
+function getCurrentUser() {
+  const tokenStr = localStorage.getItem(COGNITO_STORAGE_KEY);
+  if (!tokenStr) return null;
+  try {
+    const tokens = JSON.parse(tokenStr);
+    const payload = decodeJwt(tokens.id_token);
+    if (!payload) return null;
+    return {
+      email: payload.email || "User",
+      name: payload.name || payload['cognito:username'] || "User",
+      sub: payload.sub,
+      groups: payload['cognito:groups'] || []
+    };
+  } catch {
+    return null;
+  }
+}
+
+function getIdToken() {
+  const tokenStr = localStorage.getItem(COGNITO_STORAGE_KEY);
+  if (!tokenStr) return null;
+
+  try {
+    const tokens = JSON.parse(tokenStr);
+    return tokens.id_token;
+  } catch {
+    return null;
+  }
+}
+
+function isAdminUser() {
+  const user = getCurrentUser();
+  return user && user.groups && user.groups.includes("admin");
+}
+
+function updateAuthUI(user) {
+  const loginBtn = document.getElementById("btn-login");
+  const logoutBtn = document.getElementById("btn-logout");
+  const userInfo = document.getElementById("user-info");
+
+  if (user && user.email) {
+    if (loginBtn) loginBtn.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "inline-flex";
+    if (userInfo) {
+      userInfo.style.display = "inline-flex";
+      userInfo.innerHTML = `
+        <div class="user-email">${user.email}</div>
+        <div class="user-name">${user.name}</div>
+      `;
+    }
+    currentUser = user;
+  } else {
+    if (loginBtn) loginBtn.style.display = "inline-flex";
+    if (logoutBtn) logoutBtn.style.display = "none";
+    if (userInfo) userInfo.style.display = "none";
+    currentUser = null;
+  }
+}
+
+async function login() {
+  try {
+    const codeVerifier = generateCodeVerifier();
+    const state = generateState();
+    const codeChallenge = await generateCodeChallenge(codeVerifier);
+
+    sessionStorage.setItem("cognito_code_verifier", codeVerifier);
+    sessionStorage.setItem("cognito_state", state);
+
+    const authorizeUrl = 
+      `${COGNITO_DOMAIN}/oauth2/authorize` +
+      `?response_type=code` +
+      `&client_id=${encodeURIComponent(COGNITO_CLIENT_ID)}` +
+      `&redirect_uri=${encodeURIComponent(COGNITO_REDIRECT_URI)}` +
+      `&scope=${encodeURIComponent(COGNITO_SCOPES)}` +
+      `&state=${encodeURIComponent(state)}` +
+      `&code_challenge=${encodeURIComponent(codeChallenge)}` +
+      `&code_challenge_method=S256`;
+
+    window.location.href = authorizeUrl;
+  } catch (err) {
+    console.error("Login error:", err);
+    showAlert("Login failed ❌", "error");
+  }
+}
+
+function logout() {
+  try {
+    localStorage.removeItem(COGNITO_STORAGE_KEY);
+    sessionStorage.removeItem("cognito_code_verifier");
+    sessionStorage.removeItem("cognito_state");
+    currentUser = null;
+    updateAuthUI(null);
+
+    const logoutUrl = 
+      `${COGNITO_DOMAIN}/logout` +
+      `?client_id=${encodeURIComponent(COGNITO_CLIENT_ID)}` +
+      `&logout_uri=${encodeURIComponent(COGNITO_REDIRECT_URI)}`;
+
+    showAlert("Logged out successfully 👋", "success");
+    setTimeout(() => {
+      window.location.href = logoutUrl;
+    }, 500);
+  } catch (err) {
+    console.error("Logout error:", err);
+    showAlert("Logout failed ❌", "error");
+  }
+}
+
+async function handleRedirectCallback() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const code = urlParams.get("code");
+  const state = urlParams.get("state");
+  const error = urlParams.get("error");
+
+  if (error) {
+    console.error("OAuth error:", error, urlParams.get("error_description"));
+    showAlert("Authentication failed: " + error, "error");
+    window.history.replaceState({}, document.title, window.location.pathname);
+    return;
+  }
+
+  if (!code) {
+    initializeAuthState();
+    return;
+  }
+
+  try {
+    const storedState = sessionStorage.getItem("cognito_state");
+    const storedVerifier = sessionStorage.getItem("cognito_code_verifier");
+
+    if (!storedState || state !== storedState) {
+      throw new Error("State mismatch - CSRF detected");
+    }
+
+    if (!storedVerifier) {
+      throw new Error("Code verifier not found");
+    }
+
+    const tokenUrl = `${COGNITO_DOMAIN}/oauth2/token`;
+    const body = new URLSearchParams({
+      grant_type: "authorization_code",
+      client_id: COGNITO_CLIENT_ID,
+      code: code,
+      redirect_uri: COGNITO_REDIRECT_URI,
+      code_verifier: storedVerifier
+    });
+
+    const response = await fetch(tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: body.toString()
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error_description || data.error || "Token exchange failed");
+    }
+
+    const idTokenPayload = decodeJwt(data.id_token);
+    const expiresAt = (idTokenPayload.exp * 1000) + (5 * 60 * 1000);
+
+    const tokenData = {
+      id_token: data.id_token,
+      access_token: data.access_token,
+      refresh_token: data.refresh_token || null,
+      expires_at: expiresAt,
+      token_type: "Bearer"
+    };
+
+    localStorage.setItem(COGNITO_STORAGE_KEY, JSON.stringify(tokenData));
+    sessionStorage.removeItem("cognito_code_verifier");
+    sessionStorage.removeItem("cognito_state");
+
+    window.history.replaceState({}, document.title, window.location.pathname);
+
+    const user = getCurrentUser();
+    updateAuthUI(user);
+    showAlert(`Welcome ${user.name}! 🎉`, "success");
+
+  } catch (err) {
+    console.error("Token exchange error:", err);
+    showAlert("Authentication error: " + err.message, "error");
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+}
+
+function initializeAuthState() {
+  const user = getCurrentUser();
+  updateAuthUI(user);
+}
+/* ===== COGNITO AUTH HELPERS END ===== */
 
 function getEmoji(category) {
   if (!category) return CATEGORY_EMOJIS.default;
@@ -65,10 +338,14 @@ function populateCategories(products) {
 
 function renderProducts(products) {
   const grid = document.getElementById("product-grid");
-  const isAdmin = localStorage.getItem("role") === "admin";
+  const isAdmin = isAdminUser();
 
   const addBtn = document.getElementById("add-product-btn");
   if (addBtn) addBtn.style.display = isAdmin ? "inline-flex" : "none";
+
+  // ===== AUTH UPDATE START =====
+  updateAuthUI(currentUser);
+  // ===== AUTH UPDATE END =====
 
   // ===== TEST FEATURE START =====
   updateTestNavVisibility();
@@ -122,13 +399,13 @@ async function addToCart(productId) {
   await fetch(API + "/cart", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId: USER_ID, productId, quantity: 1 })
+    body: JSON.stringify({ userId: getUserId(), productId, quantity: 1 })
   });
   showAlert("Added to cart! 🎉");
 }
 
 async function loadCart() {
-  const res = await fetch(API + "/cart/" + USER_ID);
+  const res = await fetch(API + "/cart/" + getUserId());
   const data = await res.json();
   const cartDiv = document.getElementById("cart");
 
@@ -173,12 +450,12 @@ async function changeQty(productId, change) {
     await fetch(API + "/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: USER_ID, productId, quantity: 1 })
+      body: JSON.stringify({ userId: getUserId(), productId, quantity: 1 })
     });
   }
 
   if (change === -1) {
-    const res = await fetch(API + "/cart/" + USER_ID);
+    const res = await fetch(API + "/cart/" + getUserId());
     const items = await res.json();
     const item = items.find(i => i.productId == productId);
     if (!item) return;
@@ -186,7 +463,7 @@ async function changeQty(productId, change) {
     await fetch(API + "/cart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: USER_ID, productId, quantity: -1 })
+      body: JSON.stringify({ userId: getUserId(), productId, quantity: -1 })
     });
   }
 
@@ -194,7 +471,7 @@ async function changeQty(productId, change) {
 }
 
 async function removeItem(productId) {
-  await fetch(API + `/cart/${USER_ID}/${productId}`, { method: "DELETE" });
+  await fetch(API + `/cart/${getUserId()}/${productId}`, { method: "DELETE" });
   loadCart();
 }
 
@@ -208,7 +485,7 @@ function formatDate(dateString) {
 }
 
 async function loadOrders() {
-  const res = await fetch(API + "/orders/" + USER_ID);
+  const res = await fetch(API + "/orders/" + getUserId());
   let data = await res.json();
   const orderDiv = document.getElementById("orders");
 
@@ -244,7 +521,7 @@ async function placeOrder() {
     const res = await fetch(API + "/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: USER_ID })
+      body: JSON.stringify({ userId: getUserId() })
     });
 
     const data = await res.json();
@@ -264,28 +541,6 @@ async function placeOrder() {
     console.error(err);
     showAlert("Something went wrong ❌");
   }
-}
-
-function enableAdmin() {
-  localStorage.setItem("role", "admin");
-  showAlert("Admin mode enabled 👑");
-  renderProducts(ALL_PRODUCTS);
-  // ===== TEST FEATURE START =====
-  updateTestNavVisibility();
-  // ===== TEST FEATURE END =====
-}
-
-function disableAdmin() {
-  localStorage.setItem("role", "user");
-  showAlert("User mode enabled 👤");
-  renderProducts(ALL_PRODUCTS);
-  // ===== TEST FEATURE START =====
-  updateTestNavVisibility();
-  // If currently on test section, redirect away
-  if (document.getElementById("test-section").classList.contains("active")) {
-    showProducts();
-  }
-  // ===== TEST FEATURE END =====
 }
 
 /* ── ADD MODAL FUNCTIONS ── */
@@ -326,11 +581,12 @@ async function submitProduct() {
     return;
   }
 
+  const idToken = getIdToken();
   await fetch(API + "/products", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "role": "admin"
+      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
     },
     body: JSON.stringify({ name, price, category, stock, description })
   });
@@ -343,11 +599,10 @@ async function submitProduct() {
 async function deleteProduct(id) {
   console.log("Deleting ID:", id);
 
+  const idToken = getIdToken();
   await fetch(API + "/products/" + Number(id), {
     method: "DELETE",
-    headers: {
-      "role": "admin"
-    }
+    ...(idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : {})
   });
 
   showAlert("Deleted");
@@ -395,11 +650,12 @@ async function submitEditProduct() {
     return;
   }
 
+  const idToken = getIdToken();
   await fetch(API + `/products/${EDIT_PRODUCT_ID}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "role": "admin"
+      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
     },
     body: JSON.stringify({ name, price, category, stock, description,discount: Number(discount || 0) })
   });
@@ -409,6 +665,7 @@ async function submitEditProduct() {
   loadProducts();
 }
 
+handleRedirectCallback();
 loadProducts();
 
 
@@ -417,14 +674,14 @@ loadProducts();
 // ── TEST PANEL: NAV VISIBILITY ──
 const TEST_USER = "test-user";
 function updateTestNavVisibility() {
-  const isAdmin = localStorage.getItem("role") === "admin";
+  const isAdmin = isAdminUser();
   const btn = document.getElementById("nav-test");
   if (btn) btn.style.display = isAdmin ? "inline-block" : "none";
 }
 
 // ── TEST PANEL: NAVIGATION ──
 function showTest() {
-  const isAdmin = localStorage.getItem("role") === "admin";
+  const isAdmin = isAdminUser();
   if (!isAdmin) {
     showAlert("Admin access required 🔒", "error");
     return;
@@ -494,13 +751,14 @@ async function testCreateProduct() {
       description: "test product"
     };
 
+    const idToken = getIdToken();
     appendOutput("  → Payload: " + JSON.stringify(payload), "info");
 
     const res = await fetch(API + "/products", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "role": "admin"
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
       },
       body: JSON.stringify(payload)
     });
@@ -522,10 +780,11 @@ async function testCreateProduct() {
     }
 
     appendOutput("  → DELETE /products/" + productId, "info");
+    const idToken = getIdToken();
 
     const delRes = await fetch(API + "/products/" + productId, {
       method: "DELETE",
-      headers: { "role": "admin" }
+      ...(idToken ? { headers: { Authorization: `Bearer ${idToken}` } } : {})
     });
 
     if (!delRes.ok) {
@@ -609,10 +868,10 @@ async function testAddToCart() {
 async function testGetCart() {
   appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
   appendOutput("🛒  TEST: Get Cart", "section");
-  appendOutput("  → GET /cart/" + USER_ID, "info");
+  appendOutput("  → GET /cart/" + getUserId(), "info");
 
   try {
-    const res = await fetch(API + "/cart/" + USER_ID);
+    const res = await fetch(API + "/cart/" + getUserId());
     const data = await res.json();
 
     if (!res.ok) {
@@ -662,7 +921,7 @@ async function testPlaceOrder() {
 // ── TEST PANEL: RUN ALL ──
 
 async function runAllTests() {
-  const isAdmin = localStorage.getItem("role") === "admin";
+  const isAdmin = isAdminUser();
   if (!isAdmin) {
     showAlert("Admin access required 🔒", "error");
     return;

@@ -41,6 +41,7 @@ async function getUserOrders(req, res) {
 // Create order
 async function createOrderHandler(req, res) {
   const { userId } = req.body;
+  console.log("ORDER USER ID:", req.body.userId);
 
   if (!userId) {
     return res.status(400).json({ error: 'userId is required' });

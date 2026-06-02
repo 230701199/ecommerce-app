@@ -7,17 +7,46 @@ const dynamo = new AWS.DynamoDB.DocumentClient({
 
 const TABLE = 'asif-products';
 
+// Cognito Admin Authorization
+// function requireAdmin(req) {
+//   const claims = req.apiGateway?.event?.requestContext?.authorizer?.claims;
+//   const groups = claims?.['cognito:groups'] || "";
+//   const groupList =
+//     typeof groups === 'string'
+//       ? groups.split(',')
+//       : groups || [];
+
+//   if (!groupList.includes('admin')) {
+//     const err = new Error('Admin access required');
+//     err.statusCode = 403;
+//     throw err;
+//   }
+// }
+function requireAdmin(req) {
+  const claims =
+    req.apiGateway?.event?.requestContext?.authorizer?.claims;
+
+  console.log("AUTH CLAIMS:", JSON.stringify(claims));
+
+  const groups = claims?.["cognito:groups"] || "";
+
+  const groupList =
+    typeof groups === "string"
+      ? groups.split(",")
+      : groups || [];
+
+  if (!groupList.includes("admin")) {
+    const err = new Error("Admin access required");
+    err.statusCode = 403;
+    throw err;
+  }
+}
+
 
 // ================= ADD PRODUCT (ADMIN ONLY) =================
 
 const addProduct = asyncHandler(async (req, res) => {
-
-  const role = req.headers["role"]; // ✅ check role
-
-  if (role !== "admin") {
-    res.status(403);
-    throw new Error("Only admin allowed");
-  }
+  requireAdmin(req); // Cognito Admin Authorization
 
   const { name, description, price, stock, category,discount } = req.body;
 
@@ -97,13 +126,7 @@ return res.json({
 // ================= DELETE PRODUCT (ADMIN ONLY) =================
 
 const deleteProduct = asyncHandler(async (req, res) => {
-
-  const role = req.headers["role"]; // ✅ check role
-
-  if (role !== "admin") {
-    res.status(403);
-    throw new Error("Only admin allowed");
-  }
+  requireAdmin(req); // Cognito Admin Authorization
 
   const id = Number(req.params.id);
 
@@ -118,12 +141,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
 });
 
 const updateProduct = asyncHandler(async (req, res) => {
-  const role = req.headers["role"];
-
-  if (role !== "admin") {
-    res.status(403);
-    throw new Error("Only admin allowed");
-  }
+  requireAdmin(req); // Cognito Admin Authorization
 
   const id = Number(req.params.id);
   const { stock, price, name, category, description,discount } = req.body;

@@ -18,11 +18,14 @@
     <button onclick="showProducts()" id="nav-products" class="active-nav">🛍️ Products</button>
     <button onclick="showCart()" id="nav-cart">🛒 Cart</button>
     <button onclick="showOrders()" id="nav-orders">📦 Orders</button>
-    <button onclick="enableAdmin()">👑 Admin</button>
-    <button onclick="disableAdmin()">👤 User</button>
     <!-- ===== TEST FEATURE START ===== -->
     <button onclick="showTest()" id="nav-test">🧪 Test</button>
     <!-- ===== TEST FEATURE END ===== -->
+    <!-- ===== COGNITO AUTH START ===== -->
+    <button onclick="login()" id="btn-login" class="auth-btn auth-login">🔐 Login</button>
+    <button onclick="logout()" id="btn-logout" class="auth-btn auth-logout" style="display:none;">🚪 Logout</button>
+    <div id="user-info" class="user-info" style="display:none;"></div>
+    <!-- ===== COGNITO AUTH END ===== -->
   </div>
 </header>
 
