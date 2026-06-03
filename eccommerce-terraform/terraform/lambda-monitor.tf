@@ -42,13 +42,11 @@ resource "aws_lambda_function" "monitor" {
   runtime = "nodejs18.x"
   handler = "lambda-monitor.handler"
 
-<<<<<<<< HEAD:eccommerce-terraform/terraform/lambda-monitor.tf
+
   filename         = "${path.root}/../lambda-monitor.zip"
   source_code_hash = filebase64sha256("${path.root}/../lambda-monitor.zip")
-========
-  filename         = "lambda-monitor.zip"
-  # source_code_hash = filebase64sha256("lambda-monitor.zip")
->>>>>>>> d94dfbc (updated admin):eccommerce-terraform/lambda-monitor.tf
+
+
 
   role = aws_iam_role.lambda_role.arn
 }
