@@ -1631,6 +1631,7 @@ select:focus {
   .modal-actions  { flex-direction: column; }
 }
 
+<<<<<<<< HEAD:frontend-terraform/frontend/styles.css
 /* ─── ADMIN ORDERS ─── */
 .admin-orders-table-wrap {
   width: 100%;
@@ -1640,6 +1641,239 @@ select:focus {
   border-radius: var(--radius-xl);
   padding: 24px;
   margin-top: 20px;
+========
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-n">N</span>EXM<span class="logo-x">A</span>RT<span class="logo-dot"></span>
+  </div>
+  <div class="nav-buttons">
+    <button onclick="showProducts()" id="nav-products" class="active-nav">🛍️ Products</button>
+    <button onclick="showCart()" id="nav-cart">🛒 Cart</button>
+    <button onclick="showOrders()" id="nav-orders">📦 Orders</button>
+    <button onclick="enableAdmin()">👑 Admin</button>
+    <button onclick="disableAdmin()">👤 User</button>
+    <!-- ===== TEST FEATURE START ===== -->
+    <button onclick="showTest()" id="nav-test">🧪 Test</button>
+    <!-- ===== TEST FEATURE END ===== -->
+  </div>
+</header>
+
+<div id="alert-box"></div>
+
+<!-- ADD PRODUCT MODAL -->
+<div id="modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="modal-box">
+    <button class="btn-modal-close" onclick="closeModal()">✕</button>
+    <h3>➕ ADD PRODUCT</h3>
+    <p class="modal-subtitle">// fill in the details to list a new product</p>
+
+    <div class="modal-field">
+      <label>Product Name</label>
+      <input type="text" id="modal-name" placeholder="e.g. Wireless Headphones" />
+    </div>
+
+    <div class="modal-field">
+      <label>Price (₹)</label>
+      <input type="number" id="modal-price" placeholder="e.g. 1999" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Category</label>
+      <input type="text" id="modal-category" placeholder="e.g. Electronics" />
+    </div>
+
+    <div class="modal-field">
+      <label>Stock</label>
+      <input type="number" id="modal-stock" placeholder="e.g. 10" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Description</label>
+      <input type="text" id="modal-description" placeholder="e.g. High quality wireless headphones" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-modal-submit" onclick="submitProduct()"><span>🚀 Add Product</span></button>
+      <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PRODUCT MODAL -->
+<div id="edit-modal-overlay" onclick="handleEditOverlayClick(event)">
+  <div id="edit-modal-box">
+    <button class="btn-modal-close" onclick="closeEditModal()">✕</button>
+    <h3>✏️ EDIT PRODUCT</h3>
+    <p class="modal-subtitle">// update the details for this product</p>
+
+    <div class="modal-field">
+      <label>Product Name</label>
+      <input type="text" id="edit-modal-name" placeholder="e.g. Wireless Headphones" />
+    </div>
+
+    <div class="modal-field">
+      <label>Price (₹)</label>
+      <input type="number" id="edit-modal-price" placeholder="e.g. 1999" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Category</label>
+      <input type="text" id="edit-modal-category" placeholder="e.g. Electronics" />
+    </div>
+
+    <div class="modal-field">
+      <label>Stock</label>
+      <input type="number" id="edit-modal-stock" placeholder="e.g. 10" min="0" />
+    </div>
+
+    <div class="modal-field">
+      <label>Description</label>
+      <input type="text" id="edit-modal-description" placeholder="e.g. High quality wireless headphones" />
+    </div>
+
+    <div class="modal-field">
+      <label>Discount (%)</label>
+      <input type="number" id="edit-modal-discount" min="0" max="100" />
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn-modal-update" onclick="submitEditProduct()"><span>✅ Update Product</span></button>
+      <button class="btn-modal-cancel" onclick="closeEditModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<!-- PRODUCTS -->
+<div id="products-section" class="section active">
+
+  <div class="promo-banner">
+    <div>
+      <h2>🔥 HOT DEALS THIS WEEK</h2>
+      <p>Discover amazing products at unbeatable prices</p>
+    </div>
+    <div class="promo-badge">UP TO 50% OFF</div>
+  </div>
+
+  <div class="toolbar">
+    <h2 class="section-title">All <span class="accent">Products</span></h2>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button id="add-product-btn" onclick="openModal()">➕ Add Product</button>
+      <select id="categoryFilter" onchange="filterCategory(this.value)">
+        <option value="all">All Categories</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="loader">
+    <p>// Fetching awesome products...</p>
+    <div class="spinner"></div>
+  </div>
+  <div id="product-grid"></div>
+</div>
+
+<!-- CART -->
+<div id="cart-section" class="section">
+  <div class="toolbar">
+    <h2 class="section-title">Your <span class="accent">Cart</span></h2>
+  </div>
+  <div id="cart"></div>
+</div>
+
+<!-- ORDERS -->
+<div id="orders-section" class="section">
+  <div class="toolbar">
+    <h2 class="section-title">Order <span class="accent">History</span></h2>
+  </div>
+  <div id="orders"></div>
+</div>
+
+<!-- ===== TEST FEATURE START ===== -->
+<div id="test-section" class="section">
+
+  <div class="toolbar">
+    <h2 class="section-title">🧪 Test <span class="accent">Panel</span></h2>
+  </div>
+
+  <div class="test-run-all-wrap">
+    <button id="btn-run-all" onclick="runAllTests()"><span>🚀 Run All Tests</span></button>
+    <button id="btn-clear-output" onclick="clearOutput()">🗑 Clear Output</button>
+    <div id="test-loading">
+      <div class="test-spinner"></div>
+      <span>Running tests...</span>
+    </div>
+  </div>
+
+  <div class="test-grid">
+
+    <div class="test-group products">
+      <div class="test-group-title">🛍 Product Tests</div>
+      <div class="test-buttons">
+        <button class="btn-test purple" onclick="testCreateProduct()">➕ Create Test Product</button>
+        <button class="btn-test purple" onclick="testGetProducts()">📋 Get All Products</button>
+      </div>
+    </div>
+
+    <div class="test-group cart">
+      <div class="test-group-title">🛒 Cart Tests</div>
+      <div class="test-buttons">
+        <button class="btn-test teal" onclick="testAddToCart()">➕ Add to Cart</button>
+        <button class="btn-test teal" onclick="testGetCart()">📋 Get Cart</button>
+      </div>
+    </div>
+
+    <div class="test-group orders">
+      <div class="test-group-title">📦 Order Tests</div>
+      <div class="test-buttons">
+        <button class="btn-test pink" onclick="testPlaceOrder()">🚀 Place Order</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="test-summary" id="test-summary" style="display:none;"></div>
+
+  <div class="test-output-wrap">
+    <div class="test-output-header">
+      <div class="test-output-header-left">
+        <span class="test-dot red"></span>
+        <span class="test-dot yellow"></span>
+        <span class="test-dot green"></span>
+      </div>
+      <span class="test-output-label">Test Output</span>
+    </div>
+    <pre id="test-output">// Run a test or click "Run All Tests" to see output here...</pre>
+  </div>
+
+</div>
+<!-- ===== TEST FEATURE END ===== -->
+
+</main>
+
+<script>
+const API = "https://o8kqf93jnf.execute-api.ap-southeast-1.amazonaws.com";
+const USER_ID = "u1";
+
+let ALL_PRODUCTS = [];
+let EDIT_PRODUCT_ID = null;
+
+const CATEGORY_EMOJIS = {
+  electronics: "⚡", fashion: "👗", clothing: "👕", shoes: "👟",
+  books: "📚", food: "🍕", beauty: "💄", sports: "🏃", toys: "🎮",
+  home: "🏠", garden: "🌿", health: "💊", default: "✨"
+};
+
+function getEmoji(category) {
+  if (!category) return CATEGORY_EMOJIS.default;
+  const key = category.toLowerCase();
+  for (const [k, v] of Object.entries(CATEGORY_EMOJIS)) {
+    if (key.includes(k)) return v;
+  }
+  return CATEGORY_EMOJIS.default;
+>>>>>>>> 597d3dd (updated admin):frontend-terraform/index.html
 }
 
 .admin-orders-table {
@@ -1687,11 +1921,62 @@ select:focus {
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+<<<<<<<< HEAD:frontend-terraform/frontend/styles.css
 .admin-orders-table td select:focus {
   outline: none;
   border-color: var(--neon-purple);
   box-shadow: 0 0 12px rgba(180,0,255,0.2);
   color: var(--text-primary);
+========
+function renderProducts(products) {
+  const grid = document.getElementById("product-grid");
+  const isAdmin = localStorage.getItem("role") === "admin";
+
+  const addBtn = document.getElementById("add-product-btn");
+  if (addBtn) addBtn.style.display = isAdmin ? "inline-flex" : "none";
+
+  // ===== TEST FEATURE START =====
+  updateTestNavVisibility();
+  // ===== TEST FEATURE END =====
+
+  grid.innerHTML = "";
+  products.forEach((p, i) => {
+    const div = document.createElement("div");
+    div.className = "card";
+    div.style.animationDelay = (i * 0.05) + "s";
+    div.style.animation = "slideUp 0.4s ease both";
+
+    const outOfStock = p.stock === 0;
+    const cartBtn = outOfStock
+      ? `<button class="btn-cart out-of-stock" disabled><span>Out of Stock</span></button>`
+      : `<button class="btn-cart" onclick="addToCart('${p.id}')"><span>+ Add to Cart</span></button>`;
+
+    const stockBadge = isAdmin
+      ? `<div class="card-stock${outOfStock ? ' out' : ''}">Stock: ${p.stock !== undefined ? p.stock : 'N/A'}</div>`
+      : "";
+
+    div.innerHTML = `
+      <span class="card-emoji">${getEmoji(p.category)}</span>
+      ${p.category ? `<span class="card-category">${p.category}</span>` : ""}
+      <h3>${p.name}</h3>
+      <div class="card-price">
+        ${
+         p.discount > 0
+           ? `₹${p.finalPrice} <span style="text-decoration:line-through; font-size:14px; color:#888;">₹${p.price}</span>
+            <div style="color:#00ffcc; font-size:14px;">${p.discount}% OFF</div>`
+          : `₹${p.price}`
+       }
+</div>
+      ${stockBadge}
+      ${cartBtn}
+      ${isAdmin ? `
+      <button class="btn-delete-admin" onclick="deleteProduct('${p.id}')">🗑 Delete</button>
+      <button class="btn-edit-admin" onclick="editProduct(${p.id})">✏️ Edit</button>
+      ` : ""}
+    `;
+    grid.appendChild(div);
+  });
+>>>>>>>> 597d3dd (updated admin):frontend-terraform/index.html
 }
 
 .btn-save-status {
@@ -1714,3 +1999,610 @@ select:focus {
   color: #a0fff0;
   box-shadow: var(--glow-cyan);
 }
+<<<<<<<< HEAD:frontend-terraform/frontend/styles.css
+========
+
+async function loadCart() {
+  const res = await fetch(API + "/cart/" + USER_ID);
+  const data = await res.json();
+  const cartDiv = document.getElementById("cart");
+
+  if (!data.length) {
+    cartDiv.innerHTML = `<div class="empty-state"><span class="big-emoji">🛒</span><p>Your cart is empty!</p></div>`;
+    return;
+  }
+
+  let total = 0;
+  cartDiv.innerHTML = data.map((item, i) => {
+    const product = ALL_PRODUCTS.find(p => p.id == item.productId);
+    const price = product ? product.price : 0;
+    total += price * item.quantity;
+    return `
+      <div class="cart-item" style="animation-delay:${i*0.06}s">
+        <div class="cart-emoji">${getEmoji(product?.category)}</div>
+        <div class="cart-item-info">
+          <h4>${product ? product.name : "Unknown Product"}</h4>
+          <div class="item-price">₹${price} each</div>
+        </div>
+        <div class="qty-controls">
+          <button onclick="changeQty('${item.productId}', -1)">−</button>
+          <span>${item.quantity}</span>
+          <button onclick="changeQty('${item.productId}', 1)">+</button>
+        </div>
+        <button class="btn-remove" onclick="removeItem('${item.productId}')">Remove</button>
+      </div>
+    `;
+  }).join("") + `
+    <div class="cart-footer">
+      <div class="cart-footer-total">
+        <div class="label">Total Amount</div>
+        <div class="amount">₹${total}</div>
+      </div>
+      <button class="btn-order" onclick="placeOrder()"><span>🚀 Place Order Now</span></button>
+    </div>
+  `;
+}
+
+async function changeQty(productId, change) {
+  if (change === 1) {
+    await fetch(API + "/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: USER_ID, productId, quantity: 1 })
+    });
+  }
+
+  if (change === -1) {
+    const res = await fetch(API + "/cart/" + USER_ID);
+    const items = await res.json();
+    const item = items.find(i => i.productId == productId);
+    if (!item) return;
+    if (item.quantity <= 1) return removeItem(productId);
+    await fetch(API + "/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: USER_ID, productId, quantity: -1 })
+    });
+  }
+
+  loadCart();
+}
+
+async function removeItem(productId) {
+  await fetch(API + `/cart/${USER_ID}/${productId}`, { method: "DELETE" });
+  loadCart();
+}
+
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  return date.toLocaleString("en-IN", {
+    day: "2-digit", month: "short", year: "numeric",
+    hour: "2-digit", minute: "2-digit"
+  });
+}
+
+async function loadOrders() {
+  const res = await fetch(API + "/orders/" + USER_ID);
+  let data = await res.json();
+  const orderDiv = document.getElementById("orders");
+
+  if (!data.length) {
+    orderDiv.innerHTML = `<div class="empty-state"><span class="big-emoji">📦</span><p>No orders yet!</p></div>`;
+    return;
+  }
+
+  data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  orderDiv.innerHTML = data.map((order, i) => {
+    const items = order.items.map(i => {
+      const p = ALL_PRODUCTS.find(x => x.id == i.productId);
+      return `<li>${getEmoji(p?.category)} ${p ? p.name : i.productId} &nbsp;×${i.quantity}</li>`;
+    }).join("");
+    return `
+      <div class="order-card" style="animation-delay:${i*0.07}s">
+        <div class="order-header">
+          <div class="order-id">#${order.orderId.slice(-8).toUpperCase()}</div>
+          <div class="order-status">${order.status}</div>
+        </div>
+        <div class="order-meta">
+          <p><strong>Date</strong> ${formatDate(order.createdAt)}</p>
+        </div>
+        <div class="order-total">₹${order.totalAmount}</div>
+        <ul class="order-items">${items}</ul>
+      </div>
+    `;
+  }).join("");
+}
+
+async function placeOrder() {
+  try {
+    const res = await fetch(API + "/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: USER_ID })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAlert(data.error || "Order failed ❌");
+      return;
+    }
+
+    showAlert("Order placed successfully! 🎉");
+
+    loadCart();
+    loadProducts();
+    showCart();
+
+  } catch (err) {
+    console.error(err);
+    showAlert("Something went wrong ❌");
+  }
+}
+
+function enableAdmin() {
+  localStorage.setItem("role", "admin");
+  showAlert("Admin mode enabled 👑");
+  renderProducts(ALL_PRODUCTS);
+  // ===== TEST FEATURE START =====
+  updateTestNavVisibility();
+  // ===== TEST FEATURE END =====
+}
+
+function disableAdmin() {
+  localStorage.setItem("role", "user");
+  showAlert("User mode enabled 👤");
+  renderProducts(ALL_PRODUCTS);
+  // ===== TEST FEATURE START =====
+  updateTestNavVisibility();
+  // If currently on test section, redirect away
+  if (document.getElementById("test-section").classList.contains("active")) {
+    showProducts();
+  }
+  // ===== TEST FEATURE END =====
+}
+
+/* ── ADD MODAL FUNCTIONS ── */
+function openModal() {
+  document.getElementById("modal-name").value = "";
+  document.getElementById("modal-price").value = "";
+  document.getElementById("modal-category").value = "";
+  document.getElementById("modal-stock").value = "";
+  document.getElementById("modal-description").value = "";
+  document.getElementById("modal-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("modal-name").focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.remove("open");
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById("modal-overlay")) closeModal();
+}
+
+document.addEventListener("keydown", function(e) {
+  if (e.key === "Escape") {
+    closeModal();
+    closeEditModal();
+  }
+});
+
+async function submitProduct() {
+  const name = document.getElementById("modal-name").value.trim();
+  const price = Number(document.getElementById("modal-price").value);
+  const category = document.getElementById("modal-category").value.trim();
+  const stock = Number(document.getElementById("modal-stock").value);
+  const description = document.getElementById("modal-description").value.trim();
+  
+  if (!name || !price || !category) {
+    showAlert("Please fill in all fields", "error");
+    return;
+  }
+
+  await fetch(API + "/products", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "role": "admin"
+    },
+    body: JSON.stringify({ name, price, category, stock, description })
+  });
+
+  closeModal();
+  showAlert("Product added 🚀");
+  loadProducts();
+}
+
+async function deleteProduct(id) {
+  console.log("Deleting ID:", id);
+
+  await fetch(API + "/products/" + Number(id), {
+    method: "DELETE",
+    headers: {
+      "role": "admin"
+    }
+  });
+
+  showAlert("Deleted");
+  loadProducts();
+}
+
+/* ── EDIT MODAL FUNCTIONS ── */
+function editProduct(id) {
+  const p = ALL_PRODUCTS.find(x => x.id == id);
+  if (!p) return;
+
+  EDIT_PRODUCT_ID = id;
+
+  document.getElementById("edit-modal-name").value = p.name || "";
+  document.getElementById("edit-modal-price").value = p.price || "";
+  document.getElementById("edit-modal-category").value = p.category || "";
+  document.getElementById("edit-modal-stock").value = p.stock !== undefined ? p.stock : "";
+  document.getElementById("edit-modal-description").value = p.description || "";
+  document.getElementById("edit-modal-discount").value = p.discount || 0;
+
+  document.getElementById("edit-modal-overlay").classList.add("open");
+  setTimeout(() => document.getElementById("edit-modal-name").focus(), 100);
+}
+
+function closeEditModal() {
+  document.getElementById("edit-modal-overlay").classList.remove("open");
+  EDIT_PRODUCT_ID = null;
+}
+
+function handleEditOverlayClick(e) {
+  if (e.target === document.getElementById("edit-modal-overlay")) closeEditModal();
+}
+
+async function submitEditProduct() {
+  if (!EDIT_PRODUCT_ID) return;
+
+  const name = document.getElementById("edit-modal-name").value.trim();
+  const price = Number(document.getElementById("edit-modal-price").value);
+  const category = document.getElementById("edit-modal-category").value.trim();
+  const stock = Number(document.getElementById("edit-modal-stock").value);
+  const description = document.getElementById("edit-modal-description").value.trim();
+  const discount = document.getElementById("edit-modal-discount").value;
+  if (!name || !price || !category) {
+    showAlert("Please fill in all required fields", "error");
+    return;
+  }
+
+  await fetch(API + `/products/${EDIT_PRODUCT_ID}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "role": "admin"
+    },
+    body: JSON.stringify({ name, price, category, stock, description,discount: Number(discount || 0) })
+  });
+
+  closeEditModal();
+  showAlert("Product updated ✅");
+  loadProducts();
+}
+
+loadProducts();
+
+
+/* ===== TEST FEATURE START ===== */
+
+// ── TEST PANEL: NAV VISIBILITY ──
+const TEST_USER = "test-user";
+function updateTestNavVisibility() {
+  const isAdmin = localStorage.getItem("role") === "admin";
+  const btn = document.getElementById("nav-test");
+  if (btn) btn.style.display = isAdmin ? "inline-block" : "none";
+}
+
+// ── TEST PANEL: NAVIGATION ──
+function showTest() {
+  const isAdmin = localStorage.getItem("role") === "admin";
+  if (!isAdmin) {
+    showAlert("Admin access required 🔒", "error");
+    return;
+  }
+  setActive("test-section");
+  setNavActive("test");
+}
+
+// ── TEST PANEL: OUTPUT HELPERS ──
+let _testOutputLines = [];
+
+function appendOutput(line, type = "info") {
+  _testOutputLines.push({ line, type });
+  const pre = document.getElementById("test-output");
+  const span = document.createElement("span");
+  span.className = "log-" + type;
+  span.textContent = line + "\n";
+  if (pre.textContent === "// Run a test or click \"Run All Tests\" to see output here...") {
+    pre.innerHTML = "";
+  }
+  pre.appendChild(span);
+  pre.scrollTop = pre.scrollHeight;
+}
+
+function clearOutput() {
+  _testOutputLines = [];
+  document.getElementById("test-output").innerHTML = "";
+  document.getElementById("test-output").textContent = "// Output cleared. Ready for next run...";
+  document.getElementById("test-summary").style.display = "none";
+  document.getElementById("test-summary").innerHTML = "";
+}
+
+function showResult(data, label) {
+  appendOutput("  ✔ " + (label || "Response") + ":", "success");
+  appendOutput(JSON.stringify(data, null, 2), "json");
+}
+
+function showError(err, label) {
+  appendOutput("  ✘ " + (label || "Error") + ": " + (err?.message || err), "error");
+}
+
+function setLoading(state) {
+  const el = document.getElementById("test-loading");
+  const btn = document.getElementById("btn-run-all");
+  if (state) {
+    el.classList.add("visible");
+    btn.disabled = true;
+  } else {
+    el.classList.remove("visible");
+    btn.disabled = false;
+  }
+}
+
+// ── TEST PANEL: PRODUCT TESTS ──
+
+async function testCreateProduct() {
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+  appendOutput("🛍  TEST: Create Product", "section");
+  appendOutput("  → POST /products", "info");
+
+  try {
+    const payload = {
+      name: "[TEST] product",
+      price: 1000,
+      category: "test",
+      stock: 5,
+      description: "test product"
+    };
+
+    appendOutput("  → Payload: " + JSON.stringify(payload), "info");
+
+    const res = await fetch(API + "/products", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "role": "admin"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError({ message: data.error || "HTTP " + res.status }, "Create Product");
+      return false;
+    }
+
+    showResult(data, "Product Created");
+
+    const productId = data.data?.id;
+
+    if (!productId) {
+      appendOutput("⚠ Could not find product ID for cleanup", "error");
+      return false;
+    }
+
+    appendOutput("  → DELETE /products/" + productId, "info");
+
+    const delRes = await fetch(API + "/products/" + productId, {
+      method: "DELETE",
+      headers: { "role": "admin" }
+    });
+
+    if (!delRes.ok) {
+      appendOutput("⚠ Cleanup failed (manual delete may be needed)", "error");
+    } else {
+      appendOutput("✔ Test product cleaned up", "success");
+    }
+
+    return true;
+
+  } catch (err) {
+    showError(err, "Create Product");
+    return false;
+  }
+}
+
+async function testGetProducts() {
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+  appendOutput("🛍  TEST: Get All Products", "section");
+  appendOutput("  → GET /products", "info");
+  try {
+    const res = await fetch(API + "/products");
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError({ message: data.error || "HTTP " + res.status }, "Get Products");
+      return false;
+    }
+
+    const count = (data.data || []).length;
+    appendOutput("  ✔ Total products fetched: " + count, "success");
+    showResult(data.data ? data.data.slice(0, 3) : data, "First 3 Products (preview)");
+    return true;
+  } catch (err) {
+    showError(err, "Get Products");
+    return false;
+  }
+}
+
+// ── TEST PANEL: CART TESTS ──
+
+async function testAddToCart() {
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+  appendOutput("🛒  TEST: Add to Cart", "section");
+
+  const product = ALL_PRODUCTS.find(p => p.stock > 0);
+  if (!product) {
+    appendOutput("  ⚠ No in-stock products to add to cart.", "error");
+    return false;
+  }
+
+  appendOutput("  → POST /cart  (productId: " + product.id + ", name: " + product.name + ")", "info");
+
+  try {
+    const res = await fetch(API + "/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: TEST_USER,
+        productId: String(product.id),
+        quantity: 1
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError({ message: data.error || "HTTP " + res.status }, "Add to Cart");
+      return false;
+    }
+
+    showResult(data, "Cart Response");
+    return true;
+
+  } catch (err) {
+    showError(err, "Add to Cart");
+    return false;
+  }
+}
+
+async function testGetCart() {
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+  appendOutput("🛒  TEST: Get Cart", "section");
+  appendOutput("  → GET /cart/" + USER_ID, "info");
+
+  try {
+    const res = await fetch(API + "/cart/" + USER_ID);
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError({ message: data.error || "HTTP " + res.status }, "Get Cart");
+      return false;
+    }
+
+    const count = Array.isArray(data) ? data.length : "?";
+    appendOutput("  ✔ Cart items: " + count, "success");
+    showResult(data, "Cart Items");
+    return true;
+  } catch (err) {
+    showError(err, "Get Cart");
+    return false;
+  }
+}
+
+// ── TEST PANEL: ORDER TESTS ──
+
+async function testPlaceOrder() {
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+  appendOutput("📦  TEST: Place Order", "section");
+  appendOutput("  → POST /orders  (userId: " + TEST_USER + ")", "info");
+
+  try {
+    const res = await fetch(API + "/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: TEST_USER })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showError({ message: data.error || "HTTP " + res.status }, "Place Order");
+      return false;
+    }
+
+    showResult(data, "Order Response");
+    await loadProducts();
+    return true;
+  } catch (err) {
+    showError(err, "Place Order");
+    return false;
+  }
+}
+
+// ── TEST PANEL: RUN ALL ──
+
+async function runAllTests() {
+  const isAdmin = localStorage.getItem("role") === "admin";
+  if (!isAdmin) {
+    showAlert("Admin access required 🔒", "error");
+    return;
+  }
+
+  clearOutput();
+  setLoading(true);
+
+  const results = {};
+  const timestamp = new Date().toLocaleString("en-IN");
+
+  appendOutput("╔══════════════════════════════════════════╗", "section");
+  appendOutput("║       🧪 NEXMART — FULL TEST SUITE       ║", "section");
+  appendOutput("╚══════════════════════════════════════════╝", "section");
+  appendOutput("  Started: " + timestamp, "info");
+  appendOutput("", "info");
+
+  appendOutput("▶ PRODUCT TESTS", "section");
+  results.createProduct  = await testCreateProduct();
+  results.getProducts    = await testGetProducts();
+
+  appendOutput("", "info");
+
+  appendOutput("▶ CART TESTS", "section");
+  results.addToCart = await testAddToCart();
+  results.getCart   = await testGetCart();
+
+  appendOutput("", "info");
+
+  appendOutput("▶ ORDER TESTS", "section");
+  results.placeOrder = await testPlaceOrder();
+
+  appendOutput("", "info");
+
+  const passed = Object.values(results).filter(Boolean).length;
+  const failed = Object.values(results).filter(v => v === false).length;
+  const total  = Object.keys(results).length;
+
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+  appendOutput("📊  RESULTS SUMMARY", "section");
+  appendOutput("  ✔ Passed: " + passed + "/" + total, "success");
+  if (failed > 0) {
+    appendOutput("  ✘ Failed: " + failed + "/" + total, "error");
+  }
+  appendOutput("  Finished: " + new Date().toLocaleString("en-IN"), "info");
+  appendOutput("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", "divider");
+
+  const summaryEl = document.getElementById("test-summary");
+  summaryEl.style.display = "flex";
+  summaryEl.innerHTML = `
+    <span class="test-badge total">🧪 Total: ${total}</span>
+    <span class="test-badge pass">✔ Passed: ${passed}</span>
+    ${failed > 0 ? `<span class="test-badge fail">✘ Failed: ${failed}</span>` : ""}
+  `;
+
+  setLoading(false);
+  showAlert(failed === 0 ? "All tests passed! 🎉" : failed + " test(s) failed ⚠️", failed === 0 ? "success" : "error");
+}
+
+// Init test nav visibility on page load
+updateTestNavVisibility();
+
+/* ===== TEST FEATURE END ===== */
+</script>
+
+</body>
+</html>
+>>>>>>>> 597d3dd (updated admin):frontend-terraform/index.html
