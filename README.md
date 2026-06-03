@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 # 🛒 NexMart
 
@@ -241,10 +241,9 @@ Traditional e-commerce backends are commonly deployed as monolithic applications
 
 ### Admin Features
 
-- 🔒 **Role-Based Access** — Admin users are members of the `Admin` Cognito group; unauthorized routes return `403 Forbidden`
-- ➕ **Product Management** — Create, update, and delete products via the admin panel
-- 📊 **Order Management** — View all platform orders and update order statuses (`PENDING` → `SHIPPED` → `DELIVERED`)
-- 📈 **Business Metrics Dashboard** — CloudWatch dashboard showing orders, revenue, active carts, and Lambda error rates in real time
+- 🔒 **Role-Based Access** — Admin users are members of the `admin` Cognito group; unauthorized routes return `403 Forbidden`
+- ➕ **Product Management** — Create, update, and delete products through admin-protected product endpoints
+- 📈 **Business Metrics Dashboard** — CloudWatch dashboard showing operational and business metrics in real time
 
 ---
 
@@ -283,7 +282,7 @@ Amazon Cognito serves as the identity provider for NexMart. The setup includes:
 - **Email Verification** — Users must verify their email before they can log in
 - **App Client** — Configured for SRP (Secure Remote Password) authentication with no client secret (suitable for browser-based SPAs)
 - **User Groups**:
-  - `Admin` — has elevated permissions to manage products and all orders
+  - `admin` — has elevated permissions to manage products and all orders
   - Customers (no group) — can only access their own cart and orders
 - **Custom UI Pages** — Login, signup, and email verification pages are hosted on S3/CloudFront (not the Cognito Hosted UI), giving full control over branding and UX
 
@@ -296,7 +295,7 @@ Amazon Cognito serves as the identity provider for NexMart. The setup includes:
    ├── Access Token — used for API authorization (sent as Bearer token)
    └── Refresh Token — long-lived token for silent re-authentication
 
-3. Frontend stores tokens securely (memory / sessionStorage)
+3. Frontend stores Cognito tokens in localStorage and uses them for authenticated API requests.
 4. Every API request includes:
    Authorization: Bearer <AccessToken>
 
@@ -396,11 +395,9 @@ Authorization: Bearer <Cognito AccessToken>
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| `POST` | `/orders` | Customer | Place a new order from cart |
-| `GET` | `/orders` | Customer | Get all orders for the authenticated user |
-| `GET` | `/orders/{id}` | Customer/Admin | Get a specific order by ID |
-| `PUT` | `/orders/{id}/status` | Admin | Update order status |
-| `GET` | `/admin/orders` | Admin | Get all orders across all users |
+| `POST` | `/orders` | Protected | Place a new order from cart |
+| `GET` | `/orders` | Protected | Get all orders |
+| `GET` | `/orders/{userId}` | Protected | Get orders for a specific user |
 
 **POST /orders — Response**
 ```json
@@ -416,70 +413,44 @@ Authorization: Bearer <Cognito AccessToken>
 }
 ```
 
-**PUT /orders/{id}/status — Request Body**
-```json
-{
-  "status": "SHIPPED"
-}
-```
-
 ---
 
 ## 🗄️ DynamoDB Design
 
-DynamoDB is the primary data store for all three microservices. Each service owns its table — there is no shared schema between services, which preserves service isolation.
+DynamoDB is the primary data store for all three microservices. Each service owns its own table, and only the table primary key schemas are declared in Terraform.
 
 ### Design Philosophy
 
-NexMart uses a **single-table design pattern per service** with composite keys (Partition Key + Sort Key) to support multiple access patterns without expensive scans. All tables use **on-demand (pay-per-request) billing** to match the serverless cost model.
+The current Terraform configuration defines dedicated tables for products, carts, and orders using on-demand billing. Non-key attributes are stored by the application at runtime.
 
 ---
 
-### Products Table (`nexmart-products`)
+### Products Table (`asif-products`)
 
 | Attribute | Type | Notes |
 |---|---|---|
-| `productId` (PK) | String | UUID, e.g. `prod_abc123` |
-| `name` | String | Product display name |
-| `description` | String | Full product description |
-| `price` | Number | Stored as decimal |
-| `stock` | Number | Available inventory count |
-| `category` | String | Used with GSI for category browsing |
-| `imageUrl` | String | CDN URL |
-| `createdAt` | String | ISO 8601 timestamp |
-
-**GSI: CategoryIndex** — PK: `category`, SK: `createdAt` → enables filtering products by category
+| `id` (PK) | Number | Primary partition key |
 
 ---
 
-### Carts Table (`nexmart-carts`)
+### Carts Table (`asif-cart`)
 
 | Attribute | Type | Notes |
 |---|---|---|
-| `userId` (PK) | String | Cognito `sub` claim |
-| `productId` (SK) | String | One item per product per user |
-| `quantity` | Number | Cart item quantity |
-| `addedAt` | String | ISO 8601 timestamp |
-
-Each user's cart is a set of items stored as separate rows with `userId + productId` as the composite key. This allows O(1) reads and atomic updates per item.
+| `userId` (PK) | String | Cognito `sub` claim or application user identifier |
+| `productId` (SK) | String | Product identifier |
 
 ---
 
-### Orders Table (`nexmart-orders`)
+### Orders Table (`asif-order`)
 
 | Attribute | Type | Notes |
 |---|---|---|
-| `orderId` (PK) | String | UUID, e.g. `ord_xyz789` |
-| `userId` (SK) | String | Cognito `sub` claim |
-| `items` | List | Snapshot of cart items at checkout |
-| `totalAmount` | Number | Calculated at order creation |
-| `status` | String | `PENDING` / `PROCESSING` / `SHIPPED` / `DELIVERED` / `CANCELLED` |
-| `createdAt` | String | ISO 8601 timestamp |
-| `updatedAt` | String | ISO 8601 timestamp |
-
-**GSI: UserOrdersIndex** — PK: `userId`, SK: `createdAt` → enables efficient query of all orders for a given user, sorted by time
+| `orderId` (PK) | String | Primary partition key |
 
 ---
+
+No Global Secondary Indexes are defined in `eccommerce-terraform/terraform/dynamodb.tf`.
 
 ## 📊 Observability & Monitoring
 
@@ -495,9 +466,9 @@ A custom CloudWatch Dashboard (`NexMart-Overview`) provides a real-time operatio
 | Lambda Error Rate | `Errors / Invocations` | Service health |
 | Lambda Duration (P50/P95/P99) | `Duration` | Performance profiling |
 | DynamoDB Read/Write Capacity | Consumed vs provisioned | Database utilization |
-| Orders Created (Business) | Custom metric | Order volume trend |
-| Revenue (Business) | Custom metric | GMV over time |
-| Active Carts | Custom metric | Engagement funnel |
+| Orders Placed (Business) | Custom metric | Order volume trend |
+| Products Created (Business) | Custom metric | Product creation rate |
+| Cart Items Added (Business) | Custom metric | Cart activity rate |
 
 ### CloudWatch Alarms
 
@@ -545,25 +516,15 @@ API Gateway (12ms)
 
 ### Business Metrics
 
-Lambda functions emit custom CloudWatch metrics using the `PutMetricData` API:
+The repository includes a helper module at `eccommerce-terraform/business-metrics.js` that defines CloudWatch metric names for business events.
 
-```javascript
-// Example: emitted from Order Service after successful order creation
-await cloudwatch.putMetricData({
-  Namespace: 'NexMart/Business',
-  MetricData: [
-    { MetricName: 'OrdersCreated', Value: 1, Unit: 'Count' },
-    { MetricName: 'OrderRevenue',  Value: totalAmount, Unit: 'None' }
-  ]
-}).promise();
-```
+Current metric helper names in the codebase are:
 
-| Metric Namespace | Metric Name | Emitted By |
-|---|---|---|
-| `NexMart/Business` | `OrdersCreated` | Order Service |
-| `NexMart/Business` | `OrderRevenue` | Order Service |
-| `NexMart/Business` | `CartItemsAdded` | Cart Service |
-| `NexMart/Business` | `ProductViews` | Product Service |
+- `NexMart/Business` `OrdersPlaced`
+- `NexMart/Business` `ProductsCreated`
+- `NexMart/Business` `CartItemsAdded`
+
+The repository does not currently contain active producer calls for `OrderRevenue` or `ProductViews`.
 
 ---
 
@@ -595,66 +556,65 @@ Mixing both stacks in a single `terraform apply` would mean a frontend CDN inval
 ### Terraform Project Structure
 
 ```
-nexmart/
-├── eccommerce-terraform/
-│   └── terraform/
-│       ├── main.tf                  # Root module, provider config
-│       ├── variables.tf             # Input variables
-│       ├── outputs.tf               # API Gateway URL, Cognito IDs
-│       ├── terraform.tfvars         # Environment-specific values (gitignored)
-│       ├── modules/
-│       │   ├── api_gateway/         # REST API, stages, deployment
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── lambda/              # Functions, roles, layers, X-Ray config
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── dynamodb/            # Tables, GSIs, TTL, billing mode
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── cognito/             # User Pool, App Client, User Groups
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── cloudwatch/          # Dashboards, Alarms, Log Groups
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   ├── sns/                 # Alert topic, email subscriptions
-│       │   │   ├── main.tf
-│       │   │   ├── variables.tf
-│       │   │   └── outputs.tf
-│       │   └── iam/                 # Lambda execution roles, policies
-│       │       ├── main.tf
-│       │       ├── variables.tf
-│       │       └── outputs.tf
-│       └── lambda_src/
-│           ├── product-service/     # Node.js Lambda source
-│           ├── cart-service/
-│           └── order-service/
+NexMart/
 │
-└── frontend-terraform/
-    └── terraform/
-        ├── main.tf                  # Root module
-        ├── variables.tf
-        ├── outputs.tf               # CloudFront distribution URL
-        ├── terraform.tfvars
-        └── modules/
-            ├── s3/                  # Bucket, bucket policy, static website
-            │   ├── main.tf
-            │   ├── variables.tf
-            │   └── outputs.tf
-            ├── cloudfront/          # Distribution, OAC, cache behaviors
-            │   ├── main.tf
-            │   ├── variables.tf
-            │   └── outputs.tf
-            └── deployment/          # S3 sync of frontend assets
-                ├── main.tf
-                ├── variables.tf
-                └── outputs.tf
+├── eccommerce-terraform/
+│   │
+│   ├── product-service/
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   └── src/
+│   │
+│   ├── cart-service/
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   └── src/
+│   │
+│   ├── order-service/
+│   │   ├── package.json
+│   │   ├── package-lock.json
+│   │   └── src/
+│   │
+│   └── terraform/
+│       ├── provider.tf
+│       ├── main.tf
+│       ├── variable.tf
+│       ├── output.tf
+│       ├── lambda.tf
+│       ├── dynamodb.tf
+│       ├── api-gateway.tf
+│       ├── cognito.tf
+│       ├── iam.tf
+│       ├── permissions.tf
+│       ├── cloudwatch.tf
+│       ├── monitor.tf
+│       ├── lambda-monitor.tf
+│       ├── .terraform/
+│       └── terraform.tfstate
+│
+├── frontend-terraform/
+│   │
+│   ├── app.js
+│   ├── auth.js
+│   ├── index.html
+│   ├── login.html
+│   ├── signup.html
+│   ├── verify.html
+│   ├── styles.css
+│   ├── auth.css
+│   │
+│   └── terraform/
+│       ├── main.tf
+│       ├── cloudfront.tf
+│       ├── variable.tf
+│       ├── output.tf
+│       ├── .terraform/
+│       └── terraform.tfstate
+│
+├── CUSTOM_AUTH_INTEGRATION.md
+├── AUTH_QUICK_REFERENCE.md
+├── README.md
+└── smoke-test.sh
 ```
 
 ---
@@ -665,18 +625,19 @@ nexmart/
 
 ```bash
 # Required tools
-aws --version      # AWS CLI v2
-terraform --version # Terraform >= 1.5
-node --version     # Node.js >= 18.x (for Lambda packaging)
+aws --version         # AWS CLI v2
+terraform --version   # Terraform >= 1.5
+node --version        # Node.js >= 18.x
 ```
 
 #### Step 1 — Configure AWS Credentials
 
 ```bash
 aws configure
-# AWS Access Key ID:     <your-key>
-# AWS Secret Access Key: <your-secret>
-# Default region:        us-east-1
+
+# AWS Access Key ID:     <your-access-key>
+# AWS Secret Access Key: <your-secret-key>
+# Default region:        ap-southeast-1
 # Output format:         json
 ```
 
@@ -685,81 +646,117 @@ aws configure
 ```bash
 cd eccommerce-terraform/terraform
 
-# Initialize Terraform (download providers, set up remote state)
+# Initialize Terraform
 terraform init
 
-# Review the execution plan
-terraform plan -var-file="terraform.tfvars"
+# Review execution plan
+terraform plan
 
-# Apply infrastructure
-terraform apply -var-file="terraform.tfvars"
+# Deploy infrastructure
+terraform apply
 
-# Capture outputs (API Gateway URL, Cognito User Pool ID, etc.)
+# View outputs
 terraform output
 ```
 
-Key outputs used by the frontend:
-```
-api_gateway_url         = "https://abc123.execute-api.us-east-1.amazonaws.com/prod"
-cognito_user_pool_id    = "us-east-1_XXXXXXXXX"
-cognito_app_client_id   = "XXXXXXXXXXXXXXXXXXXXXXXXXX"
+Example outputs:
+
+```text
+api_gateway_url
+cognito_user_pool_id
+cognito_app_client_id
 ```
 
-#### Step 3 — Update Frontend Config
+#### Step 3 — Configure Frontend Authentication
 
-```javascript
-// frontend/config.js
-const CONFIG = {
-  API_BASE_URL:      "https://abc123.execute-api.us-east-1.amazonaws.com/prod",
-  USER_POOL_ID:      "us-east-1_XXXXXXXXX",
-  APP_CLIENT_ID:     "XXXXXXXXXXXXXXXXXXXXXXXXXX",
-  REGION:            "us-east-1"
-};
+Update the Cognito and API Gateway configuration values used by:
+
+```text
+auth.js
+app.js
+login.html
+signup.html
+verify.html
 ```
+
+Required values:
+
+```text
+API Gateway URL
+Cognito User Pool ID
+Cognito App Client ID
+AWS Region (ap-southeast-1)
+```
+
+These values can be obtained from:
+
+```bash
+terraform output
+```
+
+in the backend Terraform project.
 
 #### Step 4 — Deploy Frontend Infrastructure
 
 ```bash
 cd frontend-terraform/terraform
 
+# Initialize Terraform
 terraform init
-terraform plan -var-file="terraform.tfvars"
-terraform apply -var-file="terraform.tfvars"
 
-# Outputs CloudFront distribution URL
-terraform output cloudfront_url
+# Review execution plan
+terraform plan
+
+# Deploy infrastructure
+terraform apply
+
+# View CloudFront URL
+terraform output
 ```
 
-#### Step 5 — Seed an Admin User (Optional)
+After deployment, open the CloudFront URL in a browser.
+
+#### Step 5 — Create an Admin User (Optional)
+
+Users can register normally through the NexMart signup page.
+
+To grant admin privileges to an existing user:
 
 ```bash
-# Create admin user in Cognito
-aws cognito-idp admin-create-user \
-  --user-pool-id us-east-1_XXXXXXXXX \
-  --username admin@nexmart.com \
-  --user-attributes Name=email,Value=admin@nexmart.com Name=email_verified,Value=true \
-  --temporary-password TempPass@123
-
-# Add user to Admin group
 aws cognito-idp admin-add-user-to-group \
-  --user-pool-id us-east-1_XXXXXXXXX \
-  --username admin@nexmart.com \
-  --group-name Admin
+  --user-pool-id <COGNITO_USER_POOL_ID> \
+  --username <USER_EMAIL> \
+  --group-name admin
 ```
+
+Example:
+
+```bash
+aws cognito-idp admin-add-user-to-group \
+  --user-pool-id ap-southeast-1_Pwak67UsW \
+  --username admin@example.com \
+  --group-name admin
+```
+
+Once added to the `admin` Cognito group, the user gains access to:
+
+- Create Products
+- Update Products
+- Delete Products
 
 #### Teardown
 
 ```bash
-# Destroy backend (Lambda, DynamoDB, Cognito, etc.)
+# Destroy backend infrastructure
 cd eccommerce-terraform/terraform
-terraform destroy -var-file="terraform.tfvars"
+terraform destroy
 
-# Destroy frontend (S3, CloudFront, OAC)
+# Destroy frontend infrastructure
 cd frontend-terraform/terraform
-terraform destroy -var-file="terraform.tfvars"
+terraform destroy
 ```
 
-> ⚠️ DynamoDB tables and Cognito User Pool will be permanently deleted on destroy. Back up any production data before running destroy.
+> ⚠️ Warning: Destroying the backend infrastructure permanently removes Lambda functions, DynamoDB tables, CloudWatch resources, SNS topics, and Cognito resources. Ensure all required data is backed up before running destroy.
 
 ---
 
@@ -782,27 +779,82 @@ Tests cover:
 - JWT claim extraction logic
 - HTTP response shape (status codes, body structure)
 
-### Integration Testing (API Gateway + Lambda)
+### Integration Tests — UI Test Panel
 
-Integration tests use the **AWS SAM CLI** for local emulation or deploy to a staging environment:
+The project includes a browser-based **UI Test Panel** for testing the live deployed API end-to-end.
 
-```bash
-# Test a real endpoint against staging environment
-curl -X GET https://<api-id>.execute-api.us-east-1.amazonaws.com/staging/products \
-  -H "Authorization: Bearer <test-token>"
+**How to use:**
+
+1. Deploy the backend (see [Backend Deployment](#backend-deployment)).
+2. Open the Test Panel in your browser (available via CloudFront).
+3. Enter your **API Gateway base URL** in the input field.
+4. Click test buttons to run operations against each service:
+   - Create, read, update, and delete products
+   - Add and retrieve cart items
+   - Place orders and view order history
+5. HTTP response codes and results are displayed inline for each test.
+
+> ⚠️ Integration tests run against real AWS resources. The backend must be deployed before running them.
+
+---
+
+### 🧪 Smoke Testing (End-to-End Validation)
+
+This project includes a **shell-based smoke test script** to verify that all core services are working correctly after deployment.
+
+---
+
+### 🎯 Purpose
+
+The smoke test validates the complete workflow of the application:
+
+- Product creation  
+- Cart operations  
+- Order processing  
+- Service-to-service integration  
+
+---
+
+### ⚙️ What the Script Does
+
+The script performs the following steps:
+
+1. Clears existing cart for test user  
+2. Fetches products (API availability check)  
+3. Creates a new product  
+4. Retrieves product by ID  
+5. Adds product to cart  
+6. Validates cart contents  
+7. Creates an order  
+8. Deletes the test product (cleanup)  
+
+---
+
+### 👤 Test User
+
+To avoid affecting real user data, the script uses:
+
+```text
+test-user
 ```
 
-### End-to-End Testing
+---
 
-Manual E2E test scenarios:
+### 🚀 How to Run
 
-| Scenario | Steps | Expected |
-|---|---|---|
-| Customer signup | Register → verify email → login | JWT tokens returned; user in DB |
-| Add to cart | Auth → GET /products → POST /cart | Cart item stored in DynamoDB |
-| Place order | POST /orders | Order created; cart cleared |
-| Admin auth guard | Non-admin calls POST /products | `403 Forbidden` |
-| Token expiry | Wait for token expiry; call API | `401 Unauthorized` |
+> ⚠️ Use Git Bash or any Unix-based terminal (Linux / WSL)
+
+```bash
+chmod +x smoke-test.sh
+./smoke-test.sh
+✅ Expected Output
+Status: 200
+Status: 201
+...
+🚀 Smoke Test Completed
+
+---
+
 
 ### Infrastructure Testing (Terraform)
 
@@ -838,7 +890,7 @@ terraform plan -detailed-exitcode
 ### 3. DynamoDB Single-Table Design
 **Challenge:** Designing the Orders table to support both "get a single order" and "get all orders for a user" without a full table scan.
 
-**Learning:** Composite keys alone aren't enough for both access patterns. Adding a GSI (`UserOrdersIndex` with `userId` as PK and `createdAt` as SK) enabled O(log n) user-scoped queries while keeping the primary key optimized for `orderId` lookups.
+**Learning:** The current Terraform configuration defines only the Orders table primary key (`orderId`). User-scoped queries are handled in service code rather than via a dedicated GSI, so this implementation does not currently support that access pattern with an indexed query.
 
 ---
 
@@ -871,30 +923,6 @@ terraform plan -detailed-exitcode
 | **Rate Limiting** | Per-user API throttling to prevent abuse | API Gateway Usage Plans |
 | **Secrets Management** | Migrate all secrets from env vars to Secrets Manager | AWS Secrets Manager |
 
----
-
-## 📸 Screenshots
-
-> *Add screenshots of the live application here. Suggested captures:*
-
-| Screen | Description |
-|---|---|
-| `screenshots/01-homepage.png` | Product catalog landing page via CloudFront |
-| `screenshots/02-login.png` | Custom Cognito login page |
-| `screenshots/03-signup.png` | Custom Cognito signup page |
-| `screenshots/04-email-verify.png` | Email verification flow |
-| `screenshots/05-product-detail.png` | Single product view |
-| `screenshots/06-cart.png` | Shopping cart with items |
-| `screenshots/07-order-placed.png` | Order confirmation screen |
-| `screenshots/08-order-history.png` | Customer order history |
-| `screenshots/09-admin-products.png` | Admin product management panel |
-| `screenshots/10-admin-orders.png` | Admin all-orders view with status update |
-| `screenshots/11-cloudwatch-dashboard.png` | CloudWatch NexMart-Overview dashboard |
-| `screenshots/12-xray-trace.png` | X-Ray service map and trace detail |
-| `screenshots/13-terraform-apply.png` | Terraform apply output |
-| `screenshots/14-cognito-userpool.png` | Cognito User Pool console view |
-
----
 
 <div align="center">
 
