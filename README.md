@@ -72,7 +72,7 @@ https://d32dvut05ll57l.cloudfront.net
 
 ### Backend
 
-https://<your-api-id>.execute-api.ap-southeast-1.amazonaws.com
+https://o8kqf93jnf.execute-api.ap-southeast-1.amazonaws.com
 
 ---
 
@@ -152,6 +152,11 @@ Traditional e-commerce backends are commonly deployed as monolithic applications
 
 - 🔒 **Role-Based Access** — Admin users are members of the `admin` Cognito group; unauthorized routes return `403 Forbidden`
 - ➕ **Product Management** — Create, update, and delete products through admin-protected product endpoints
+- 📦 Admin Order Management
+  - View all customer orders
+  - View customer email addresses
+  - Update order status
+  - Track order lifecycle
 - 📈 **Business Metrics Dashboard** — CloudWatch dashboard showing operational and business metrics in real time
 
 ---
@@ -191,7 +196,12 @@ Amazon Cognito serves as the identity provider for NexMart. The setup includes:
 - **Email Verification** — Users must verify their email before they can log in
 - **App Client** — Configured for SRP (Secure Remote Password) authentication with no client secret (suitable for browser-based SPAs)
 - **User Groups**:
-  - `admin` — has elevated permissions to manage products and all orders
+  - admin — has elevated permissions to:
+    - Create Products
+    - Update Products
+    - Delete Products
+    - View All Customer Orders
+    - Update Order Status
   - Customers (no group) — can only access their own cart and orders
 - **Custom UI Pages** — Login, signup, and email verification pages are hosted on S3/CloudFront (not the Cognito Hosted UI), giving full control over branding and UX
 
@@ -321,6 +331,21 @@ Authorization: Bearer <Cognito AccessToken>
   "createdAt": "2025-06-01T14:22:00Z"
 }
 ```
+
+---
+### 🔑 Admin Orders API
+
+| Method | Endpoint | Auth | Description |
+|----------|------------|------|-------------|
+| GET | /admin/orders | Admin | View all customer orders |
+| PUT | /admin/orders/{orderId}/status | Admin | Update order status |
+
+Supported Status Values:
+
+- PENDING
+- PROCESSING
+- SHIPPED
+- DELIVERED
 
 ---
 
@@ -647,11 +672,13 @@ aws cognito-idp admin-add-user-to-group \
   --group-name admin
 ```
 
-Once added to the `admin` Cognito group, the user gains access to:
+Once added to the admin Cognito group, the user gains access to:
 
 - Create Products
 - Update Products
 - Delete Products
+- View All Orders
+- Update Order Status
 
 #### Teardown
 

@@ -3,7 +3,9 @@ const {
   healthCheck,
   getAllOrders,
   getUserOrders,
-  createOrderHandler
+  createOrderHandler,
+  getAdminOrders,
+  updateOrderStatus
 } = require('./controllers/orderController');
 
 const app = express();
@@ -19,10 +21,16 @@ app.get('/orders/:userId', getUserOrders);
 
 app.post('/orders', createOrderHandler);
 
+app.get('/admin/orders', getAdminOrders);
+
+app.put('/admin/orders/:orderId/status', updateOrderStatus);
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error("Unhandled Error:", err);
-  res.status(500).json({ error: 'Internal server error' });
+  const status = err.statusCode || 500;
+  const message = err.message || 'Internal server error';
+  res.status(status).json({ error: message });
 });
 
 // Lambda fix

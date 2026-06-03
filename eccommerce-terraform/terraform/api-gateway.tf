@@ -68,6 +68,35 @@ resource "aws_apigatewayv2_route" "orders_with_id" {
   target    = "integrations/${aws_apigatewayv2_integration.order.id}"
 }
 
+# Admin Orders
+resource "aws_apigatewayv2_authorizer" "cognito" {
+  api_id           = aws_apigatewayv2_api.api.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "CognitoAuthorizer"
+
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.frontend.id]
+    issuer   = "https://${aws_cognito_user_pool.main.endpoint}"
+  }
+}
+
+resource "aws_apigatewayv2_route" "admin_orders" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "GET /admin/orders"
+  target             = "integrations/${aws_apigatewayv2_integration.order.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
+resource "aws_apigatewayv2_route" "admin_orders_status" {
+  api_id             = aws_apigatewayv2_api.api.id
+  route_key          = "PUT /admin/orders/{orderId}/status"
+  target             = "integrations/${aws_apigatewayv2_integration.order.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
+}
+
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.api.id
   name        = "$default"

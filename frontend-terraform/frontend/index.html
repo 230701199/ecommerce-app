@@ -74,6 +74,9 @@
     <!-- ===== TEST FEATURE START ===== -->
     <button onclick="showTest()" id="nav-test">🧪 Test</button>
     <!-- ===== TEST FEATURE END ===== -->
+    <!-- ===== ADMIN ORDERS START ===== -->
+    <button onclick="showAdminOrders()" id="nav-admin-orders" style="display:none;">🔑 Admin Orders</button>
+    <!-- ===== ADMIN ORDERS END ===== -->
     <!-- ===== COGNITO AUTH START ===== -->
     <button onclick="login()" id="btn-login" class="auth-btn auth-login">🔐 Login</button>
     <button onclick="logout()" id="btn-logout" class="auth-btn auth-logout" style="display:none;">🚪 Logout</button>
@@ -272,6 +275,30 @@
 
 </div>
 <!-- ===== TEST FEATURE END ===== -->
+
+<!-- ===== ADMIN ORDERS START ===== -->
+<div id="admin-orders-section" class="section">
+  <div class="toolbar">
+    <h2 class="section-title">Admin <span class="accent">Orders</span></h2>
+  </div>
+  <div class="admin-orders-table-wrap">
+    <table class="admin-orders-table">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer Email</th>
+          <th>Total Amount</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="admin-orders-list">
+      </tbody>
+    </table>
+  </div>
+</div>
+<!-- ===== ADMIN ORDERS END ===== -->
 
 </main>
 

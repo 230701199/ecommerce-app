@@ -1630,3 +1630,87 @@ select:focus {
   #edit-modal-box { padding: 30px 18px 22px; margin: 0 14px; }
   .modal-actions  { flex-direction: column; }
 }
+
+/* ─── ADMIN ORDERS ─── */
+.admin-orders-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  background: linear-gradient(145deg, #130e2c, #0e0924);
+  border: 1px solid rgba(138, 43, 226, 0.28);
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  margin-top: 20px;
+}
+
+.admin-orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
+.admin-orders-table th {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #d580ff;
+  padding: 12px 16px;
+  border-bottom: 2px solid rgba(138, 43, 226, 0.35);
+}
+
+.admin-orders-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(138, 43, 226, 0.15);
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  vertical-align: middle;
+}
+
+.admin-orders-table tr:hover {
+  background: rgba(180, 0, 255, 0.05);
+}
+
+.admin-orders-table td select {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 6px 24px 6px 8px;
+  background-color: var(--bg-panel);
+  border: 1px solid rgba(138, 43, 226, 0.35);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23b400ff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.admin-orders-table td select:focus {
+  outline: none;
+  border-color: var(--neon-purple);
+  box-shadow: 0 0 12px rgba(180,0,255,0.2);
+  color: var(--text-primary);
+}
+
+.btn-save-status {
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  border: 1.5px solid rgba(0, 255, 204, 0.55);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: rgba(0, 255, 204, 0.12);
+  color: #60f5d0;
+  transition: all 0.2s ease;
+}
+
+.btn-save-status:hover {
+  background: rgba(0, 255, 204, 0.2);
+  color: #a0fff0;
+  box-shadow: var(--glow-cyan);
+}

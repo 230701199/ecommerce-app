@@ -54,4 +54,10 @@ resource "aws_lambda_function" "order_service" {
   tracing_config {
     mode = "Active"
   }
+
+  environment {
+    variables = {
+      COGNITO_USER_POOL_ID = aws_cognito_user_pool.main.id
+    }
+  }
 }

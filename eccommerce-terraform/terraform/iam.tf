@@ -47,3 +47,21 @@ resource "aws_iam_role_policy" "lambda_custom_metrics" {
     ]
   })
 }
+
+# Allow Lambda functions to look up Cognito user details (AdminGetUser)
+resource "aws_iam_role_policy" "lambda_cognito_admin_get_user" {
+  name = "${var.project_name}-lambda-cognito-admin-get-user"
+  role = aws_iam_role.lambda_exec_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "AllowCognitoAdminGetUser"
+        Effect   = "Allow"
+        Action   = ["cognito-idp:AdminGetUser"]
+        Resource = aws_cognito_user_pool.main.arn
+      }
+    ]
+  })
+}

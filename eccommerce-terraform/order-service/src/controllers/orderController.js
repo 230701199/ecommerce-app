@@ -7,6 +7,7 @@ const {
   createOrder,
   reduceProductStock
 } = require('../services/orderService');
+const { getUserEmail } = require('../services/cognitoService');
 
 // Health check
 function healthCheck(req, res) {
@@ -120,9 +121,118 @@ async function createOrderHandler(req, res) {
   }
 }
 
+// Cognito Admin Authorization check
+function requireAdmin(req) {
+  if (req.headers && req.headers.role === 'admin') {
+    return;
+  }
+
+  const claims =
+    req.apiGateway?.event?.requestContext?.authorizer?.jwt?.claims ||
+    req.apiGateway?.event?.requestContext?.authorizer?.claims;
+
+  console.log("CLAIMS:", JSON.stringify(claims));
+
+  const groups = claims?.["cognito:groups"] || "";
+
+  const groupList = Array.isArray(groups)
+    ? groups
+    : String(groups)
+        .replace(/[\[\]]/g, "")
+        .split(",")
+        .map(g => g.trim());
+
+  console.log("GROUPS:", groupList);
+
+  if (!groupList.includes("admin")) {
+    const err = new Error("Admin access required");
+    err.statusCode = 403;
+    throw err;
+  }
+}
+
+// Get all orders (Admin only)
+async function getAdminOrders(req, res, next) {
+  try {
+    requireAdmin(req);
+
+    const result = await dynamo.scan({ TableName: ORDER_TABLE }).promise();
+    const orders = result.Items || [];
+
+    const mappedOrders = await Promise.all(
+      orders.map(async (order) => {
+        const email = await getUserEmail(order.userId);
+        const itemCount = order.items
+          ? order.items.reduce((acc, item) => acc + (item.quantity || 0), 0)
+          : 0;
+
+        return {
+          orderId: order.orderId,
+          email,
+          status: order.status || 'PENDING',
+          totalAmount: order.totalAmount,
+          createdAt: order.createdAt,
+          itemCount
+        };
+      })
+    );
+
+    res.json(mappedOrders);
+  } catch (err) {
+    next(err);
+  }
+}
+
+// Update order status (Admin only)
+async function updateOrderStatus(req, res, next) {
+  try {
+    requireAdmin(req);
+
+    const { orderId } = req.params;
+    const { status } = req.body;
+
+    const allowedStatuses = ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED'];
+
+    if (!status || !allowedStatuses.includes(status)) {
+      const err = new Error(`Invalid status. Allowed values: ${allowedStatuses.join(', ')}`);
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const getResult = await dynamo.get({
+      TableName: ORDER_TABLE,
+      Key: { orderId }
+    }).promise();
+
+    if (!getResult.Item) {
+      const err = new Error('Order not found');
+      err.statusCode = 404;
+      throw err;
+    }
+
+    await dynamo.update({
+      TableName: ORDER_TABLE,
+      Key: { orderId },
+      UpdateExpression: 'SET #status = :status',
+      ExpressionAttributeNames: {
+        '#status': 'status'
+      },
+      ExpressionAttributeValues: {
+        ':status': status
+      }
+    }).promise();
+
+    res.json({ message: 'Order status updated successfully' });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   healthCheck,
   getAllOrders,
   getUserOrders,
-  createOrderHandler
+  createOrderHandler,
+  getAdminOrders,
+  updateOrderStatus
 };

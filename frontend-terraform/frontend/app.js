@@ -51,6 +51,16 @@ function updateAuthUI(user) {
     if (userInfo)  userInfo.style.display  = "none";
     currentUser = null;
   }
+
+  updateAdminOrdersVisibility();
+}
+
+function updateAdminOrdersVisibility() {
+  const adminBtn = document.getElementById("nav-admin-orders");
+  const isAdmin = isAdminUser();
+  if (adminBtn) {
+    adminBtn.style.display = isAdmin ? "inline-flex" : "none";
+  }
 }
 
 /**
@@ -98,6 +108,16 @@ function setNavActive(id) {
 function showProducts() { setActive("products-section"); setNavActive("products"); }
 function showCart() { setActive("cart-section"); setNavActive("cart"); loadCart(); }
 function showOrders() { setActive("orders-section"); setNavActive("orders"); loadOrders(); }
+function showAdminOrders() {
+  const isAdmin = isAdminUser();
+  if (!isAdmin) {
+    showAlert("Admin access required 🔒", "error");
+    return;
+  }
+  setActive("admin-orders-section");
+  setNavActive("admin-orders");
+  loadAdminOrders();
+}
 
 function setActive(id) {
   document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
@@ -788,3 +808,93 @@ async function runAllTests() {
 updateTestNavVisibility();
 
 /* ===== TEST FEATURE END ===== */
+
+async function loadAdminOrders() {
+  const tbody = document.getElementById("admin-orders-list");
+  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">// Fetching orders...</td></tr>`;
+
+  try {
+    const idToken = getIdToken();
+    const res = await fetch(API + "/admin/orders", {
+      headers: {
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+      }
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ff7096;">Failed to load admin orders: ${data.error || "Unknown Error"}</td></tr>`;
+      return;
+    }
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No orders found in NexMart.</td></tr>`;
+      return;
+    }
+
+    // Sort orders by date descending
+    data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    tbody.innerHTML = data.map((order, i) => {
+      const orderIdShort = order.orderId.slice(-8).toUpperCase();
+      const formattedDate = formatDate(order.createdAt);
+      const statuses = ["PENDING", "PROCESSING", "SHIPPED", "DELIVERED"];
+
+      const options = statuses.map(s => 
+        `<option value="${s}" ${order.status === s ? "selected" : ""}>${s}</option>`
+      ).join("");
+
+      return `
+        <tr style="animation-delay:${i * 0.05}s; animation: slideUp 0.3s ease both;">
+          <td style="font-family:var(--font-mono); color:#70e8ff;">#${orderIdShort}</td>
+          <td>${order.email}</td>
+          <td style="color:#ff5577; font-weight:700;">₹${order.totalAmount}</td>
+          <td>
+            <select id="status-select-${order.orderId}">
+              ${options}
+            </select>
+          </td>
+          <td>${formattedDate}</td>
+          <td>
+            <button class="btn-save-status" onclick="updateOrderStatus('${order.orderId}')">Save</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#ff7096;">Something went wrong ❌</td></tr>`;
+  }
+}
+
+async function updateOrderStatus(orderId) {
+  const select = document.getElementById(`status-select-${orderId}`);
+  const newStatus = select.value;
+  const idToken = getIdToken();
+
+  try {
+    const res = await fetch(API + `/admin/orders/${orderId}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+      },
+      body: JSON.stringify({ status: newStatus })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAlert(data.error || "Update failed ❌", "error");
+      return;
+    }
+
+    showAlert("Order status updated! 🎉");
+    loadAdminOrders();
+  } catch (err) {
+    console.error(err);
+    showAlert("Something went wrong ❌", "error");
+  }
+}
