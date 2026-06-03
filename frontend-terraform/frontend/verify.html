@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Email — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body class="auth-page">
+
+  <div class="auth-bg-grid"></div>
+
+  <div class="auth-wrapper">
+
+    <!-- Logo -->
+    <a href="index.html" class="auth-logo">
+      <span class="logo-n">N</span>EXM<span class="logo-x">A</span>RT<span class="logo-dot"></span>
+    </a>
+
+    <!-- Card -->
+    <div class="auth-card">
+
+      <div class="auth-card-header">
+        <div class="auth-verify-icon">📧</div>
+        <h1 class="auth-title">Verify Email</h1>
+        <p class="auth-subtitle">// enter the code we sent you</p>
+      </div>
+
+      <!-- Alert area -->
+      <div id="auth-alert" class="auth-alert" style="display:none;"></div>
+
+      <form id="verify-form" onsubmit="handleVerify(event)" novalidate>
+
+        <div class="auth-field">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="auth-field">
+          <label for="code">Verification Code</label>
+          <!-- OTP-style input: numeric, 6 digits, large text -->
+          <input
+            type="text"
+            id="code"
+            name="code"
+            placeholder="123456"
+            inputmode="numeric"
+            maxlength="6"
+            autocomplete="one-time-code"
+            class="auth-code-input"
+            required
+          />
+          <span class="auth-field-hint">Check your inbox (and spam folder) for a 6-digit code.</span>
+        </div>
+
+        <button type="submit" class="auth-btn-submit" id="verify-btn">
+          <span class="auth-btn-label">✅ Verify Account</span>
+          <span class="auth-btn-spinner" style="display:none;"></span>
+        </button>
+
+      </form>
+
+      <!-- Resend section -->
+      <div class="auth-resend-wrap">
+        <span>Didn't receive a code?</span>
+        <button
+          type="button"
+          class="auth-link auth-resend-btn"
+          id="resend-btn"
+          onclick="handleResend()"
+        >Resend Code</button>
+        <span id="resend-timer" class="auth-resend-timer" style="display:none;"></span>
+      </div>
+
+      <div class="auth-links">
+        <span>Back to</span>
+        <a href="login.html" class="auth-link">Sign In</a>
+      </div>
+
+    </div><!-- /.auth-card -->
+
+    <p class="auth-footer-text">
+      The code expires in 24 hours.
+    </p>
+
+  </div><!-- /.auth-wrapper -->
+
+  <script src="auth.js"></script>
+  <script>
+    /* ─── Pre-fill email from sessionStorage (set by signup.html) ─── */
+    (function prefillEmail() {
+      const saved = sessionStorage.getItem("pending_verify_email");
+      if (saved) document.getElementById("email").value = saved;
+    })();
+
+    /* ─── Verify form submit ─── */
+    async function handleVerify(e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const code  = document.getElementById("code").value.trim();
+
+      if (!email || !code) {
+        showAuthAlert("Please enter your email and the verification code.", "error");
+        return;
+      }
+
+      if (!/^\d{6}$/.test(code)) {
+        showAuthAlert("The code should be exactly 6 digits.", "error");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await confirmSignUp(email, code);
+        sessionStorage.removeItem("pending_verify_email");
+
+        showAuthAlert("Email verified! Redirecting to login…", "success");
+        setTimeout(() => window.location.replace("login.html"), 1200);
+
+      } catch (err) {
+        showAuthAlert(friendlyError(err), "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    /* ─── Resend with cooldown timer ─── */
+    let resendCooldown = null;
+
+    async function handleResend() {
+      const email = document.getElementById("email").value.trim();
+      if (!email) {
+        showAuthAlert("Please enter your email address first.", "error");
+        return;
+      }
+
+      const resendBtn   = document.getElementById("resend-btn");
+      const timerEl     = document.getElementById("resend-timer");
+
+      resendBtn.disabled = true;
+
+      try {
+        await resendVerificationCode(email);
+        showAuthAlert("Code resent! Check your inbox.", "success");
+        startResendCooldown(60);
+      } catch (err) {
+        showAuthAlert(friendlyError(err), "error");
+        resendBtn.disabled = false;
+      }
+    }
+
+    function startResendCooldown(seconds) {
+      const resendBtn = document.getElementById("resend-btn");
+      const timerEl   = document.getElementById("resend-timer");
+      let remaining   = seconds;
+
+      resendBtn.style.display  = "none";
+      timerEl.style.display    = "inline";
+      timerEl.textContent      = `Resend in ${remaining}s`;
+
+      resendCooldown = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(resendCooldown);
+          resendBtn.disabled     = false;
+          resendBtn.style.display = "inline";
+          timerEl.style.display   = "none";
+        } else {
+          timerEl.textContent = `Resend in ${remaining}s`;
+        }
+      }, 1000);
+    }
+
+    /* ─── UI helpers ─── */
+    function setLoading(state) {
+      const btn     = document.getElementById("verify-btn");
+      const label   = btn.querySelector(".auth-btn-label");
+      const spinner = btn.querySelector(".auth-btn-spinner");
+      btn.disabled        = state;
+      label.style.display   = state ? "none"         : "inline";
+      spinner.style.display = state ? "inline-block"  : "none";
+    }
+
+    function showAuthAlert(msg, type) {
+      const el = document.getElementById("auth-alert");
+      el.textContent   = msg;
+      el.className     = "auth-alert auth-alert-" + type;
+      el.style.display = "block";
+      // Scroll alert into view on mobile
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    /* ─── Allow only digits in code field ─── */
+    document.getElementById("code").addEventListener("input", function () {
+      this.value = this.value.replace(/\D/g, "").slice(0, 6);
+    });
+  </script>
+</body>
+</html>

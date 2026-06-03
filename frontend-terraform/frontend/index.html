@@ -3,9 +3,62 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>E-Commerce App</title>
+<title>NexMart</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+
+<!--
+  AUTH GUARD — runs before the page body is parsed.
+
+  Why inline here instead of relying solely on app.js?
+  app.js is a module-style script that executes after the DOM is ready.
+  By the time it runs, the browser has already painted the skeleton HTML,
+  so an unauthenticated user would briefly see the page before being
+  redirected. This inline script catches the common case (no tokens at all)
+  synchronously, replacing the page before a single frame is rendered.
+
+  The async case (expired id_token + valid refresh_token) is handled by
+  requireAuth() inside the app.js startApp() IIFE.
+-->
+<script>
+  (function earlyAuthGuard() {
+    var raw = localStorage.getItem("cognito_tokens");
+    if (!raw) {
+      // No tokens at all — skip straight to login, replace history entry
+      // so the back-button cannot return to this page while unauthenticated.
+      window.location.replace("login.html");
+      return;
+    }
+    try {
+      var tokens  = JSON.parse(raw);
+      var idToken = tokens.id_token;
+      if (!idToken) {
+        // Tokens exist but id_token is missing (e.g. partial storage bug)
+        // Only redirect if there is also no refresh_token to recover with.
+        if (!tokens.refresh_token) {
+          window.location.replace("login.html");
+        }
+        // If refresh_token exists, let requireAuth() in app.js handle it.
+        return;
+      }
+      // Quick expiry check without importing any library
+      var parts   = idToken.split(".");
+      var payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+      var expired = Date.now() >= (payload.exp - 30) * 1000;
+      if (expired && !tokens.refresh_token) {
+        // Token expired and no way to refresh — force login
+        localStorage.removeItem("cognito_tokens");
+        window.location.replace("login.html");
+      }
+      // If expired but refresh_token exists, fall through to requireAuth() in app.js.
+      // If not expired, fall through normally — page renders for the authenticated user.
+    } catch (e) {
+      // Corrupt storage — clear and redirect
+      localStorage.removeItem("cognito_tokens");
+      window.location.replace("login.html");
+    }
+  })();
+</script>
 </head>
 
 <body>
@@ -222,6 +275,7 @@
 
 </main>
 
+<script src="auth.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

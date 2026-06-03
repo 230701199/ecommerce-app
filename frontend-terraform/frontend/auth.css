@@ -1,0 +1,515 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   auth.css  —  NexMart Custom Auth UI
+   Extends the Spider-Verse design system from styles.css.
+   All variables (--neon-*, --bg-*, --font-*) are inherited from :root.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ─── BODY OVERRIDE FOR AUTH PAGES ───────────────────────────────────────── */
+
+body.auth-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px 16px;
+  /* subtle extra radial to punch up the centre glow on standalone pages */
+  background-image:
+    radial-gradient(ellipse 700px 500px at 50% 40%, rgba(180,0,255,0.08) 0%, transparent 70%),
+    radial-gradient(ellipse 500px 300px at 80% 20%, rgba(255,30,86,0.06) 0%, transparent 60%);
+}
+
+/* ─── ANIMATED DOT-GRID BACKGROUND ──────────────────────────────────────── */
+
+.auth-bg-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: radial-gradient(circle, rgba(180,0,255,0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  pointer-events: none;
+  animation: gridPulse 6s ease-in-out infinite alternate;
+}
+
+@keyframes gridPulse {
+  from { opacity: 0.6; }
+  to   { opacity: 1.0; }
+}
+
+/* ─── WRAPPER  (centres the card + logo stack) ────────────────────────────── */
+
+.auth-wrapper {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ─── LOGO ───────────────────────────────────────────────────────────────── */
+
+.auth-logo {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  letter-spacing: 4px;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  transition: opacity 0.2s;
+}
+
+.auth-logo:hover { opacity: 0.85; }
+
+/* logo-n, logo-x, logo-dot reuse the same classes from styles.css */
+
+/* ─── CARD ───────────────────────────────────────────────────────────────── */
+
+.auth-card {
+  width: 100%;
+  background: linear-gradient(145deg, #110c28, #0c0820);
+  border: 1px solid rgba(138, 43, 226, 0.35);
+  border-radius: var(--radius-xl);
+  padding: 40px 36px 32px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 40px 100px rgba(0, 0, 0, 0.7),
+    0 0 60px rgba(180, 0, 255, 0.08);
+  animation: cardIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.94); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* Gradient top border (matches modal style) */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--neon-red), var(--neon-purple), var(--neon-blue));
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+/* Ambient glow inside card */
+.auth-card::after {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180,0,255,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── CARD HEADER ────────────────────────────────────────────────────────── */
+
+.auth-card-header {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.auth-verify-icon {
+  font-size: 2.8rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 0 12px rgba(180,0,255,0.4));
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%,100% { transform: translateY(0);   }
+  50%      { transform: translateY(-6px); }
+}
+
+.auth-title {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  letter-spacing: 3px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1;
+}
+
+.auth-subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* ─── ALERT BANNER ───────────────────────────────────────────────────────── */
+
+.auth-alert {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.4px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 20px;
+  animation: alertFadeIn 0.3s ease both;
+  line-height: 1.5;
+}
+
+@keyframes alertFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-alert-success {
+  background: rgba(0, 255, 204, 0.1);
+  border: 1px solid var(--neon-cyan);
+  color: #80ffe8;
+  box-shadow: var(--glow-cyan);
+}
+
+.auth-alert-error {
+  background: rgba(255, 30, 86, 0.12);
+  border: 1px solid var(--neon-red);
+  color: #ff7096;
+  box-shadow: var(--glow-red);
+}
+
+/* ─── FORM FIELDS ────────────────────────────────────────────────────────── */
+
+.auth-field {
+  margin-bottom: 20px;
+}
+
+.auth-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #d580ff;
+  margin-bottom: 8px;
+}
+
+/* Wrapper to position the show/hide toggle button */
+.auth-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-field input,
+.auth-input-wrap input {
+  width: 100%;
+  padding: 13px 16px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(138, 43, 226, 0.35);
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.auth-field input::placeholder,
+.auth-input-wrap input::placeholder {
+  color: var(--text-dim);
+  font-weight: 400;
+}
+
+.auth-field input:focus,
+.auth-input-wrap input:focus {
+  border-color: var(--neon-purple);
+  box-shadow: 0 0 0 3px rgba(180, 0, 255, 0.12);
+  background: rgba(180, 0, 255, 0.05);
+}
+
+/* Extra padding-right when the show/hide toggle is present */
+.auth-input-wrap input {
+  padding-right: 44px;
+}
+
+/* ─── OTP / CODE INPUT ───────────────────────────────────────────────────── */
+
+.auth-code-input {
+  font-family: var(--font-display) !important;
+  font-size: 1.6rem !important;
+  letter-spacing: 8px !important;
+  text-align: center;
+  padding: 14px 16px !important;
+}
+
+/* ─── FIELD HINT TEXT ────────────────────────────────────────────────────── */
+
+.auth-field-hint {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 6px;
+  letter-spacing: 0.4px;
+  line-height: 1.5;
+}
+
+/* ─── SHOW / HIDE PASSWORD TOGGLE ────────────────────────────────────────── */
+
+.auth-toggle-pw {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  color: var(--text-muted);
+  line-height: 1;
+  transition: opacity 0.2s;
+  /* Remove default button focus ring in favour of the outline below */
+  outline: none;
+}
+
+.auth-toggle-pw:hover  { opacity: 0.8; }
+.auth-toggle-pw:focus-visible {
+  outline: 2px solid var(--neon-purple);
+  border-radius: 4px;
+}
+
+/* ─── PASSWORD STRENGTH METER ────────────────────────────────────────────── */
+
+.pw-strength-wrap {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pw-strength-bar {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.pw-strength-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 4px;
+  transition: width 0.35s ease, background 0.35s ease;
+}
+
+.pw-strength-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.8px;
+  min-width: 72px;
+  text-align: right;
+  transition: color 0.3s;
+}
+
+/* ─── PASSWORD POLICY LIST ───────────────────────────────────────────────── */
+
+.auth-policy-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0 0 22px;
+  padding: 14px 16px;
+  background: rgba(180,0,255,0.04);
+  border: 1px solid rgba(138,43,226,0.2);
+  border-radius: var(--radius-sm);
+}
+
+.auth-policy-list li {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  padding-left: 18px;
+  position: relative;
+  transition: color 0.25s;
+}
+
+.auth-policy-list li::before {
+  content: '✕';
+  position: absolute;
+  left: 0;
+  color: rgba(255,30,86,0.6);
+  font-size: 0.6rem;
+  top: 1px;
+  transition: all 0.25s;
+}
+
+.auth-policy-list li.pw-ok {
+  color: #60f5d0;
+}
+
+.auth-policy-list li.pw-ok::before {
+  content: '✓';
+  color: var(--neon-cyan);
+}
+
+/* ─── SUBMIT BUTTON ──────────────────────────────────────────────────────── */
+
+.auth-btn-submit {
+  width: 100%;
+  padding: 15px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  border: 1px solid rgba(180, 0, 255, 0.65);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: rgba(180, 0, 255, 0.16);
+  color: #d580ff;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.auth-btn-submit::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--neon-purple), var(--neon-red));
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.auth-btn-submit:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--neon-purple);
+  box-shadow: var(--glow-purple);
+  transform: translateY(-2px);
+}
+
+.auth-btn-submit:hover:not(:disabled)::before { opacity: 1; }
+
+.auth-btn-submit:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.auth-btn-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.auth-btn-label,
+.auth-btn-spinner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Spinner inside button */
+.auth-btn-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ─── FOOTER LINKS ───────────────────────────────────────────────────────── */
+
+.auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.auth-link {
+  color: #d580ff;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.2s, text-shadow 0.2s;
+  letter-spacing: 0.3px;
+}
+
+.auth-link:hover {
+  color: var(--neon-purple);
+  text-shadow: var(--glow-purple);
+}
+
+/* ─── RESEND CODE ROW ────────────────────────────────────────────────────── */
+
+.auth-resend-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.auth-resend-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.auth-resend-timer {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+/* ─── BELOW-CARD FOOTER TEXT ─────────────────────────────────────────────── */
+
+.auth-footer-text {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 32px 20px 24px;
+  }
+
+  .auth-title {
+    font-size: 1.8rem;
+  }
+
+  .auth-logo {
+    font-size: 1.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .auth-code-input {
+    letter-spacing: 4px !important;
+    font-size: 1.3rem !important;
+  }
+}

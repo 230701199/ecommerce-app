@@ -47,6 +47,53 @@ resource "aws_s3_object" "js" {
   etag = filemd5("${path.root}/../frontend/app.js")
 }
 
+# ── Custom Auth UI files ────────────────────────────────────────────────────
+
+resource "aws_s3_object" "auth_js" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "auth.js"
+  source       = "${path.root}/../frontend/auth.js"
+  content_type = "application/javascript"
+
+  etag = filemd5("${path.root}/../frontend/auth.js")
+}
+
+resource "aws_s3_object" "auth_css" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "auth.css"
+  source       = "${path.root}/../frontend/auth.css"
+  content_type = "text/css"
+
+  etag = filemd5("${path.root}/../frontend/auth.css")
+}
+
+resource "aws_s3_object" "login_html" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "login.html"
+  source       = "${path.root}/../frontend/login.html"
+  content_type = "text/html"
+
+  etag = filemd5("${path.root}/../frontend/login.html")
+}
+
+resource "aws_s3_object" "signup_html" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "signup.html"
+  source       = "${path.root}/../frontend/signup.html"
+  content_type = "text/html"
+
+  etag = filemd5("${path.root}/../frontend/signup.html")
+}
+
+resource "aws_s3_object" "verify_html" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "verify.html"
+  source       = "${path.root}/../frontend/verify.html"
+  content_type = "text/html"
+
+  etag = filemd5("${path.root}/../frontend/verify.html")
+}
+
 resource "aws_s3_bucket_policy" "cloudfront_access" {
   bucket = aws_s3_bucket.frontend.id
 

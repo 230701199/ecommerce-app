@@ -5,10 +5,7 @@ function getUserId() {
 }
 
 /* ===== COGNITO AUTH CONFIG START ===== */
-const COGNITO_DOMAIN = "https://ap-southeast-1pwak67usw.auth.ap-southeast-1.amazoncognito.com";
-const COGNITO_CLIENT_ID = "2qv50999jltmlrfm3tria2kqcf";
-const COGNITO_REDIRECT_URI = "https://d32dvut05ll57l.cloudfront.net";
-const COGNITO_SCOPES = "openid profile email";
+// Auth logic is now handled by auth.js — this key remains for token storage compatibility
 const COGNITO_STORAGE_KEY = "cognito_tokens";
 let currentUser = null;
 /* ===== COGNITO AUTH CONFIG END ===== */
@@ -23,113 +20,22 @@ const CATEGORY_EMOJIS = {
 };
 
 /* ===== COGNITO AUTH HELPERS START ===== */
-function generateCodeVerifier() {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  let result = '';
-  for (let i = 0; i < 128; i++) {
-    result += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return result;
-}
+// NOTE: decodeJwt, isTokenExpired, isAuthenticated, getCurrentUser,
+//       getIdToken, isAdminUser, logout are all provided by auth.js
+//       which is loaded BEFORE app.js in index.html.
 
-function generateState() {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 32; i++) {
-    result += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return result;
-}
-
-async function sha256(str) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return new Uint8Array(hashBuffer);
-}
-
-function base64UrlEncode(uint8array) {
-  const binaryString = String.fromCharCode.apply(null, uint8array);
-  return btoa(binaryString).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-}
-
-async function generateCodeChallenge(verifier) {
-  const hash = await sha256(verifier);
-  return base64UrlEncode(hash);
-}
-
-function decodeJwt(token) {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) throw new Error("Invalid JWT");
-    const payload = parts[1];
-    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
-    return JSON.parse(decoded);
-  } catch (err) {
-    console.error("JWT decode error:", err);
-    return null;
-  }
-}
-
-function isTokenExpired(token) {
-  const payload = decodeJwt(token);
-  if (!payload || !payload.exp) return true;
-  return Date.now() >= payload.exp * 1000;
-}
-
-function isAuthenticated() {
-  const tokenStr = localStorage.getItem(COGNITO_STORAGE_KEY);
-  if (!tokenStr) return false;
-  try {
-    const tokens = JSON.parse(tokenStr);
-    return tokens.id_token && !isTokenExpired(tokens.id_token);
-  } catch {
-    return false;
-  }
-}
-
-function getCurrentUser() {
-  const tokenStr = localStorage.getItem(COGNITO_STORAGE_KEY);
-  if (!tokenStr) return null;
-  try {
-    const tokens = JSON.parse(tokenStr);
-    const payload = decodeJwt(tokens.id_token);
-    if (!payload) return null;
-    return {
-      email: payload.email || "User",
-      name: payload.name || payload['cognito:username'] || "User",
-      sub: payload.sub,
-      groups: payload['cognito:groups'] || []
-    };
-  } catch {
-    return null;
-  }
-}
-
-function getIdToken() {
-  const tokenStr = localStorage.getItem(COGNITO_STORAGE_KEY);
-  if (!tokenStr) return null;
-
-  try {
-    const tokens = JSON.parse(tokenStr);
-    return tokens.id_token;
-  } catch {
-    return null;
-  }
-}
-
-function isAdminUser() {
-  const user = getCurrentUser();
-  return user && user.groups && user.groups.includes("admin");
-}
-
+/**
+ * Update the header login/logout/user-info elements based on the
+ * current session state. Called on page load and after any auth change.
+ * @param {object|null} user
+ */
 function updateAuthUI(user) {
-  const loginBtn = document.getElementById("btn-login");
+  const loginBtn  = document.getElementById("btn-login");
   const logoutBtn = document.getElementById("btn-logout");
-  const userInfo = document.getElementById("user-info");
+  const userInfo  = document.getElementById("user-info");
 
   if (user && user.email) {
-    if (loginBtn) loginBtn.style.display = "none";
+    if (loginBtn)  loginBtn.style.display  = "none";
     if (logoutBtn) logoutBtn.style.display = "inline-flex";
     if (userInfo) {
       userInfo.style.display = "inline-flex";
@@ -140,144 +46,27 @@ function updateAuthUI(user) {
     }
     currentUser = user;
   } else {
-    if (loginBtn) loginBtn.style.display = "inline-flex";
+    if (loginBtn)  loginBtn.style.display  = "inline-flex";
     if (logoutBtn) logoutBtn.style.display = "none";
-    if (userInfo) userInfo.style.display = "none";
+    if (userInfo)  userInfo.style.display  = "none";
     currentUser = null;
   }
 }
 
-async function login() {
-  try {
-    const codeVerifier = generateCodeVerifier();
-    const state = generateState();
-    const codeChallenge = await generateCodeChallenge(codeVerifier);
-
-    sessionStorage.setItem("cognito_code_verifier", codeVerifier);
-    sessionStorage.setItem("cognito_state", state);
-
-    const authorizeUrl = 
-      `${COGNITO_DOMAIN}/oauth2/authorize` +
-      `?response_type=code` +
-      `&client_id=${encodeURIComponent(COGNITO_CLIENT_ID)}` +
-      `&redirect_uri=${encodeURIComponent(COGNITO_REDIRECT_URI)}` +
-      `&scope=${encodeURIComponent(COGNITO_SCOPES)}` +
-      `&state=${encodeURIComponent(state)}` +
-      `&code_challenge=${encodeURIComponent(codeChallenge)}` +
-      `&code_challenge_method=S256`;
-
-    window.location.href = authorizeUrl;
-  } catch (err) {
-    console.error("Login error:", err);
-    showAlert("Login failed ❌", "error");
-  }
+/**
+ * Navigate to login.html — replaces the old Hosted UI redirect.
+ * Called by the Login button in index.html.
+ */
+function login() {
+  window.location.href = "login.html";
 }
 
-function logout() {
-  try {
-    localStorage.removeItem(COGNITO_STORAGE_KEY);
-    sessionStorage.removeItem("cognito_code_verifier");
-    sessionStorage.removeItem("cognito_state");
-    currentUser = null;
-    updateAuthUI(null);
-
-    const logoutUrl = 
-      `${COGNITO_DOMAIN}/logout` +
-      `?client_id=${encodeURIComponent(COGNITO_CLIENT_ID)}` +
-      `&logout_uri=${encodeURIComponent(COGNITO_REDIRECT_URI)}`;
-
-    showAlert("Logged out successfully 👋", "success");
-    setTimeout(() => {
-      window.location.href = logoutUrl;
-    }, 500);
-  } catch (err) {
-    console.error("Logout error:", err);
-    showAlert("Logout failed ❌", "error");
-  }
-}
-
-async function handleRedirectCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get("code");
-  const state = urlParams.get("state");
-  const error = urlParams.get("error");
-
-  if (error) {
-    console.error("OAuth error:", error, urlParams.get("error_description"));
-    showAlert("Authentication failed: " + error, "error");
-    window.history.replaceState({}, document.title, window.location.pathname);
-    return;
-  }
-
-  if (!code) {
-    initializeAuthState();
-    return;
-  }
-
-  try {
-    const storedState = sessionStorage.getItem("cognito_state");
-    const storedVerifier = sessionStorage.getItem("cognito_code_verifier");
-
-    if (!storedState || state !== storedState) {
-      throw new Error("State mismatch - CSRF detected");
-    }
-
-    if (!storedVerifier) {
-      throw new Error("Code verifier not found");
-    }
-
-    const tokenUrl = `${COGNITO_DOMAIN}/oauth2/token`;
-    const body = new URLSearchParams({
-      grant_type: "authorization_code",
-      client_id: COGNITO_CLIENT_ID,
-      code: code,
-      redirect_uri: COGNITO_REDIRECT_URI,
-      code_verifier: storedVerifier
-    });
-
-    const response = await fetch(tokenUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
-      body: body.toString()
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error_description || data.error || "Token exchange failed");
-    }
-
-    const idTokenPayload = decodeJwt(data.id_token);
-    const expiresAt = (idTokenPayload.exp * 1000) + (5 * 60 * 1000);
-
-    const tokenData = {
-      id_token: data.id_token,
-      access_token: data.access_token,
-      refresh_token: data.refresh_token || null,
-      expires_at: expiresAt,
-      token_type: "Bearer"
-    };
-
-    localStorage.setItem(COGNITO_STORAGE_KEY, JSON.stringify(tokenData));
-    sessionStorage.removeItem("cognito_code_verifier");
-    sessionStorage.removeItem("cognito_state");
-
-    window.history.replaceState({}, document.title, window.location.pathname);
-
-    const user = getCurrentUser();
-    updateAuthUI(user);
-    showAlert(`Welcome ${user.name}! 🎉`, "success");
-
-  } catch (err) {
-    console.error("Token exchange error:", err);
-    showAlert("Authentication error: " + err.message, "error");
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-}
-
-function initializeAuthState() {
+/**
+ * Initialise auth state from localStorage on page load.
+ * Called only AFTER requireAuth() confirms the session is valid, so
+ * by the time this runs getCurrentUser() is guaranteed to return a user.
+ */
+async function initializeAuthState() {
   const user = getCurrentUser();
   updateAuthUI(user);
 }
@@ -665,13 +454,27 @@ async function submitEditProduct() {
   loadProducts();
 }
 
-handleRedirectCallback();
-loadProducts();
+/**
+ * ── GUARDED APP STARTUP ──────────────────────────────────────────────────
+ *
+ * requireAuth() is called first. It will:
+ *   - Resolve immediately if a valid id_token exists (synchronous fast path).
+ *   - Attempt a silent token refresh if the token is expired but a
+ *     refresh_token is stored (one network round-trip).
+ *   - Redirect to login.html and never resolve if no session can be
+ *     established (page navigation stops all further execution).
+ *
+ * Only when requireAuth() resolves do we update the UI and load products.
+ * This guarantees the app NEVER renders in guest mode on index.html.
+ */
+(async function startApp() {
+  const user = await requireAuth();   // gate: redirects to login.html if not authed
+  updateAuthUI(user);                 // show correct header state immediately
+  await loadProducts();               // then fetch and render the product grid
+})();
 
 
 /* ===== TEST FEATURE START ===== */
-
-// ── TEST PANEL: NAV VISIBILITY ──
 const TEST_USER = "test-user";
 function updateTestNavVisibility() {
   const isAdmin = isAdminUser();

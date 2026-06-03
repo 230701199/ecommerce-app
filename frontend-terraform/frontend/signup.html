@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Account — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body class="auth-page">
+
+  <div class="auth-bg-grid"></div>
+
+  <div class="auth-wrapper">
+
+    <!-- Logo -->
+    <a href="index.html" class="auth-logo">
+      <span class="logo-n">N</span>EXM<span class="logo-x">A</span>RT<span class="logo-dot"></span>
+    </a>
+
+    <!-- Card -->
+    <div class="auth-card">
+
+      <div class="auth-card-header">
+        <h1 class="auth-title">Create Account</h1>
+        <p class="auth-subtitle">// join the nexmart universe</p>
+      </div>
+
+      <!-- Alert area -->
+      <div id="auth-alert" class="auth-alert" style="display:none;"></div>
+
+      <form id="signup-form" onsubmit="handleSignup(event)" novalidate autocomplete="off">
+
+        <div class="auth-field">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="Min 8 chars, uppercase, number, symbol"
+              autocomplete="new-password"
+              required
+            />
+            <button type="button" class="auth-toggle-pw" onclick="togglePassword('password', this)" aria-label="Show password">
+              👁
+            </button>
+          </div>
+          <!-- Password strength meter -->
+          <div class="pw-strength-wrap" id="pw-strength-wrap" style="display:none;">
+            <div class="pw-strength-bar">
+              <div class="pw-strength-fill" id="pw-strength-fill"></div>
+            </div>
+            <span class="pw-strength-label" id="pw-strength-label"></span>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="confirm-password">Confirm Password</label>
+          <div class="auth-input-wrap">
+            <input
+              type="password"
+              id="confirm-password"
+              name="confirm-password"
+              placeholder="Re-enter your password"
+              autocomplete="new-password"
+              required
+            />
+            <button type="button" class="auth-toggle-pw" onclick="togglePassword('confirm-password', this)" aria-label="Show password">
+              👁
+            </button>
+          </div>
+        </div>
+
+        <!-- Password policy hint -->
+        <ul class="auth-policy-list">
+          <li id="policy-length">At least 8 characters</li>
+          <li id="policy-upper">One uppercase letter</li>
+          <li id="policy-lower">One lowercase letter</li>
+          <li id="policy-number">One number</li>
+          <li id="policy-symbol">One special character (!@#$%…)</li>
+        </ul>
+
+        <button type="submit" class="auth-btn-submit" id="signup-btn">
+          <span class="auth-btn-label">🚀 Create Account</span>
+          <span class="auth-btn-spinner" style="display:none;"></span>
+        </button>
+
+      </form>
+
+      <div class="auth-links">
+        <span>Already have an account?</span>
+        <a href="login.html" class="auth-link">Sign in</a>
+      </div>
+
+    </div><!-- /.auth-card -->
+
+    <p class="auth-footer-text">
+      Your password is never stored in plain text.
+    </p>
+
+  </div><!-- /.auth-wrapper -->
+
+  <script src="auth.js"></script>
+  <script>
+    /* ─── Policy checkers ─── */
+    const policies = {
+      "policy-length": pw => pw.length >= 8,
+      "policy-upper":  pw => /[A-Z]/.test(pw),
+      "policy-lower":  pw => /[a-z]/.test(pw),
+      "policy-number": pw => /[0-9]/.test(pw),
+      "policy-symbol": pw => /[^A-Za-z0-9]/.test(pw)
+    };
+
+    document.getElementById("password").addEventListener("input", function () {
+      const pw     = this.value;
+      const wrap   = document.getElementById("pw-strength-wrap");
+      const fill   = document.getElementById("pw-strength-fill");
+      const label  = document.getElementById("pw-strength-label");
+
+      if (!pw) {
+        wrap.style.display = "none";
+        resetPolicies();
+        return;
+      }
+
+      wrap.style.display = "flex";
+
+      // Update individual policy indicators
+      for (const [id, fn] of Object.entries(policies)) {
+        const li = document.getElementById(id);
+        li.classList.toggle("pw-ok", fn(pw));
+      }
+
+      // Strength score 0-5
+      const score = Object.values(policies).filter(fn => fn(pw)).length;
+      const levels = ["", "Weak", "Fair", "Good", "Strong", "Very Strong"];
+      const colors = ["", "#ff1e56", "#ff6b35", "#f5e642", "#00d4ff", "#00ffcc"];
+
+      fill.style.width      = (score * 20) + "%";
+      fill.style.background = colors[score];
+      label.textContent     = levels[score];
+      label.style.color     = colors[score];
+    });
+
+    function resetPolicies() {
+      Object.keys(policies).forEach(id => {
+        document.getElementById(id).classList.remove("pw-ok");
+      });
+    }
+
+    /* ─── Form submit ─── */
+    async function handleSignup(e) {
+      e.preventDefault();
+
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirm  = document.getElementById("confirm-password").value;
+
+      // Client-side validation
+      if (!email || !password || !confirm) {
+        showAuthAlert("Please fill in all fields.", "error");
+        return;
+      }
+
+      if (password !== confirm) {
+        showAuthAlert("Passwords do not match.", "error");
+        return;
+      }
+
+      const failedPolicies = Object.values(policies).filter(fn => !fn(password));
+      if (failedPolicies.length > 0) {
+        showAuthAlert(
+          "Password does not meet requirements. Please check the policy hints below.",
+          "error"
+        );
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await signUp(email, password);
+
+        // Store email so verify.html can pre-fill it
+        sessionStorage.setItem("pending_verify_email", email);
+
+        showAuthAlert("Account created! Check your email for the code…", "success");
+        setTimeout(() => window.location.href = "verify.html", 1000);
+
+      } catch (err) {
+        // If account exists but isn't verified yet, just go to verify
+        if (err.code === "UsernameExistsException") {
+          sessionStorage.setItem("pending_verify_email", email);
+          showAuthAlert(
+            "An account with this email already exists. If unverified, redirecting to verify…",
+            "error"
+          );
+          setTimeout(() => window.location.href = "verify.html", 1400);
+          return;
+        }
+        showAuthAlert(friendlyError(err), "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    /* ─── UI helpers ─── */
+    function setLoading(state) {
+      const btn     = document.getElementById("signup-btn");
+      const label   = btn.querySelector(".auth-btn-label");
+      const spinner = btn.querySelector(".auth-btn-spinner");
+      btn.disabled        = state;
+      label.style.display   = state ? "none"         : "inline";
+      spinner.style.display = state ? "inline-block"  : "none";
+    }
+
+    function showAuthAlert(msg, type) {
+      const el = document.getElementById("auth-alert");
+      el.textContent   = msg;
+      el.className     = "auth-alert auth-alert-" + type;
+      el.style.display = "block";
+    }
+
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === "password") {
+        input.type       = "text";
+        btn.textContent  = "🙈";
+        btn.setAttribute("aria-label", "Hide password");
+      } else {
+        input.type       = "password";
+        btn.textContent  = "👁";
+        btn.setAttribute("aria-label", "Show password");
+      }
+    }
+  </script>
+</body>
+</html>

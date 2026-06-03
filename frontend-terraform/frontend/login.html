@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body class="auth-page">
+
+  <!-- Animated grid background (matches main app) -->
+  <div class="auth-bg-grid"></div>
+
+  <div class="auth-wrapper">
+
+    <!-- Logo -->
+    <a href="index.html" class="auth-logo">
+      <span class="logo-n">N</span>EXM<span class="logo-x">A</span>RT<span class="logo-dot"></span>
+    </a>
+
+    <!-- Card -->
+    <div class="auth-card">
+
+      <!-- Top accent bar is applied via CSS ::before -->
+
+      <div class="auth-card-header">
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">// sign in to your account</p>
+      </div>
+
+      <!-- Alert area -->
+      <div id="auth-alert" class="auth-alert" style="display:none;"></div>
+
+      <form id="login-form" onsubmit="handleLogin(event)" novalidate autocomplete="on">
+
+        <div class="auth-field">
+          <label for="email">Email Address</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="you@example.com"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <input
+              type="password"
+              id="password"
+              name="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+            <button type="button" class="auth-toggle-pw" onclick="togglePassword('password', this)" aria-label="Show password">
+              👁
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-btn-submit" id="login-btn">
+          <span class="auth-btn-label">🔐 Sign In</span>
+          <span class="auth-btn-spinner" style="display:none;"></span>
+        </button>
+
+      </form>
+
+      <div class="auth-links">
+        <span>Don't have an account?</span>
+        <a href="signup.html" class="auth-link">Create one</a>
+      </div>
+
+    </div><!-- /.auth-card -->
+
+    <p class="auth-footer-text">
+      Your session is secured with AWS Cognito.
+    </p>
+
+  </div><!-- /.auth-wrapper -->
+
+  <script src="auth.js"></script>
+  <script>
+    /**
+     * If the user is already authenticated, skip login and go straight
+     * to the main app. Runs silently without blocking the render.
+     */
+    (async function autoRedirect() {
+      // Only auto-redirect if id_token is still fresh
+      if (isAuthenticated()) {
+        window.location.replace("index.html");
+      }
+    })();
+
+    /* ─── Form submit ─── */
+    async function handleLogin(e) {
+      e.preventDefault();
+
+      const email    = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        showAuthAlert("Please fill in all fields.", "error");
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        await signIn(email, password);
+        showAuthAlert("Signed in! Redirecting…", "success");
+        setTimeout(() => window.location.replace("index.html"), 600);
+      } catch (err) {
+        // Special case: unverified account → send to verify page
+        if (err.code === "UserNotConfirmedException") {
+          sessionStorage.setItem("pending_verify_email", email);
+          showAuthAlert("Account not verified. Redirecting to verify…", "error");
+          setTimeout(() => window.location.href = "verify.html", 1200);
+          return;
+        }
+        showAuthAlert(friendlyError(err), "error");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    /* ─── UI helpers ─── */
+    function setLoading(state) {
+      const btn    = document.getElementById("login-btn");
+      const label  = btn.querySelector(".auth-btn-label");
+      const spinner = btn.querySelector(".auth-btn-spinner");
+      btn.disabled       = state;
+      label.style.display  = state ? "none"   : "inline";
+      spinner.style.display = state ? "inline-block" : "none";
+    }
+
+    function showAuthAlert(msg, type) {
+      const el = document.getElementById("auth-alert");
+      el.textContent   = msg;
+      el.className     = "auth-alert auth-alert-" + type;
+      el.style.display = "block";
+    }
+
+    function togglePassword(fieldId, btn) {
+      const input = document.getElementById(fieldId);
+      if (input.type === "password") {
+        input.type  = "text";
+        btn.textContent = "🙈";
+        btn.setAttribute("aria-label", "Hide password");
+      } else {
+        input.type  = "password";
+        btn.textContent = "👁";
+        btn.setAttribute("aria-label", "Show password");
+      }
+    }
+  </script>
+</body>
+</html>
