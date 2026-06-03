@@ -22,18 +22,55 @@ const TABLE = 'asif-products';
 //     throw err;
 //   }
 // }
+// function requireAdmin(req) {
+//   const claims =
+//     req.apiGateway?.event?.requestContext?.authorizer?.jwt?.claims ||
+//     req.apiGateway?.event?.requestContext?.authorizer?.claims;
+
+//   console.log("AUTH CLAIMS:", JSON.stringify(claims));
+
+//   const groups = claims?.["cognito:groups"] || "";
+
+//   const groupList =
+//     typeof groups === "string"
+//       ? groups.split(",")
+//       : groups || [];
+
+//   if (!groupList.includes("admin")) {
+//     const err = new Error("Admin access required");
+//     err.statusCode = 403;
+//     throw err;
+//   }
+// }
+
 function requireAdmin(req) {
+  console.log(
+    "AUTHORIZER:",
+    JSON.stringify(
+      req.apiGateway?.event?.requestContext?.authorizer,
+      null,
+      2
+    )
+  );
+
   const claims =
+    req.apiGateway?.event?.requestContext?.authorizer?.jwt?.claims ||
     req.apiGateway?.event?.requestContext?.authorizer?.claims;
 
-  console.log("AUTH CLAIMS:", JSON.stringify(claims));
+  console.log("CLAIMS:", JSON.stringify(claims));
 
   const groups = claims?.["cognito:groups"] || "";
 
-  const groupList =
-    typeof groups === "string"
-      ? groups.split(",")
-      : groups || [];
+const groupList = Array.isArray(groups)
+  ? groups
+  : String(groups)
+      .replace(/[\[\]]/g, "")
+      .split(",")
+      .map(g => g.trim());
+
+  console.log("GROUPS:", groupList);
+
+  // console.log("GROUPS:", groupList);
 
   if (!groupList.includes("admin")) {
     const err = new Error("Admin access required");

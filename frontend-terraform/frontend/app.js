@@ -780,7 +780,7 @@ async function testCreateProduct() {
     }
 
     appendOutput("  → DELETE /products/" + productId, "info");
-    const idToken = getIdToken();
+    
 
     const delRes = await fetch(API + "/products/" + productId, {
       method: "DELETE",
