@@ -40,7 +40,6 @@
 - [Testing Strategy](#-testing-strategy)
 - [Challenges & Learnings](#-challenges--learnings)
 - [Future Enhancements](#-future-enhancements)
-- [Screenshots](#-screenshots)
 
 ---
 
@@ -63,6 +62,20 @@ The platform is built around the principle of **zero server management**: there 
 
 ---
 
+---
+
+## 🌐 Live Demo
+
+### Frontend
+
+https://d32dvut05ll57l.cloudfront.net
+
+### Backend
+
+https://<your-api-id>.execute-api.ap-southeast-1.amazonaws.com
+
+---
+
 ## 💼 Business Problem
 
 Traditional e-commerce backends are commonly deployed as monolithic applications on fixed infrastructure — a design that introduces several operational and scalability challenges:
@@ -81,129 +94,25 @@ Traditional e-commerce backends are commonly deployed as monolithic applications
 
 ### High-Level System Architecture
 
-```
-                          ┌─────────────────────────────────────────────────────────┐
-                          │                      USERS                               │
-                          │            (Customers & Admins)                          │
-                          └──────────────────────┬──────────────────────────────────┘
-                                                 │ HTTPS
-                                                 ▼
-                          ┌──────────────────────────────────────────────────────────┐
-                          │               Amazon CloudFront (CDN)                    │
-                          │          Global Edge Locations / SSL/TLS                 │
-                          └──────────────────────┬───────────────────────────────────┘
-                                                 │ Origin Request (OAC)
-                                                 ▼
-                          ┌──────────────────────────────────────────────────────────┐
-                          │               Amazon S3 (Static Hosting)                 │
-                          │    HTML + CSS + JS │ Login │ Signup │ Email Verify       │
-                          └──────────────────────┬───────────────────────────────────┘
-                                                 │ API Calls (JWT in Header)
-                                                 ▼
-                          ┌──────────────────────────────────────────────────────────┐
-                          │             Amazon Cognito User Pool                     │
-                          │       Authentication │ JWT Issuance │ RBAC              │
-                          └──────────────────────┬───────────────────────────────────┘
-                                                 │ Bearer Token
-                                                 ▼
-                          ┌──────────────────────────────────────────────────────────┐
-                          │             Amazon API Gateway (REST API)                │
-                          │     Request Routing │ JWT Authorizer │ Throttling        │
-                          └────────┬────────────┬────────────────┬───────────────────┘
-                                   │            │                │
-                         ┌─────────▼──┐  ┌──────▼─────┐  ┌─────▼──────────┐
-                         │  Product   │  │    Cart    │  │     Order      │
-                         │  Service   │  │  Service   │  │    Service     │
-                         │ (Lambda)   │  │ (Lambda)   │  │   (Lambda)     │
-                         └─────────┬──┘  └──────┬─────┘  └─────┬──────────┘
-                                   │            │                │
-                                   └────────────┴────────────────┘
-                                                │
-                                                ▼
-                          ┌──────────────────────────────────────────────────────────┐
-                          │               Amazon DynamoDB                            │
-                          │   Products Table │ Carts Table │ Orders Table           │
-                          └──────────────────────────────────────────────────────────┘
-                                                │
-                                                ▼
-                          ┌──────────────────────────────────────────────────────────┐
-                          │            Observability Layer                           │
-                          │   CloudWatch Logs │ X-Ray Traces │ SNS Alarms           │
-                          └──────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="docs/architecture/High_level.png" alt="High Level Architecture" width="1000">
+</p>
 
 ---
 
 ### Authentication & Authorization Flow
 
-```
-  User                 CloudFront/S3           Cognito               API Gateway          Lambda
-   │                        │                     │                       │                  │
-   │─── Open App ──────────►│                     │                       │                  │
-   │◄── Login Page ─────────│                     │                       │                  │
-   │                        │                     │                       │                  │
-   │─── Submit Credentials ─────────────────────►│                       │                  │
-   │                        │  Authenticate User  │                       │                  │
-   │                        │  Verify Email       │                       │                  │
-   │                        │  Check User Group   │                       │                  │
-   │◄────────────────── JWT Tokens (ID + Access + Refresh) ──────────────│                  │
-   │                        │                     │                       │                  │
-   │─── API Request + Bearer Token ──────────────────────────────────────►│                  │
-   │                        │                     │  Validate JWT         │                  │
-   │                        │                     │  (Verify Signature,   │                  │
-   │                        │                     │   Expiry, Audience)   │                  │
-   │                        │                     │◄──────────────────────│                  │
-   │                        │                     │  Extract Claims:      │                  │
-   │                        │                     │  - sub (userId)       │                  │
-   │                        │                     │  - cognito:groups     │                  │
-   │                        │                     │  (admin/customer)     │                  │
-   │                        │                     │──────────────────────►│                  │
-   │                        │                     │                       │─── Route ────────►│
-   │                        │                     │                       │                  │
-   │                        │                     │                       │◄── Response ──────│
-   │◄─────────────────────────────────────── 200 OK + Payload ───────────│                  │
-```
+<p align="center">
+  <img src="docs/architecture/authent.png" alt="Authentication Flow" width="1000">
+</p>
 
 ---
 
 ### Microservices Architecture
 
-```
-  ┌──────────────────────────────────────────────────────────────────────────────┐
-  │                        Amazon API Gateway                                    │
-  │                                                                              │
-  │  /products ──────── GET, POST, PUT, DELETE                                  │
-  │  /cart     ──────── GET, POST, DELETE                                        │
-  │  /orders   ──────── GET, POST, PUT                                           │
-  └──────────┬──────────────────┬────────────────────────┬──────────────────────┘
-             │                  │                         │
-             ▼                  ▼                         ▼
-  ┌─────────────────┐  ┌─────────────────┐    ┌─────────────────────┐
-  │  Product        │  │  Cart           │    │  Order              │
-  │  Service        │  │  Service        │    │  Service            │
-  │  (Lambda)       │  │  (Lambda)       │    │  (Lambda)           │
-  │─────────────────│  │─────────────────│    │─────────────────────│
-  │ listProducts    │  │ getCart         │    │ createOrder         │
-  │ getProduct      │  │ addToCart       │    │ getOrderById        │
-  │ createProduct   │  │ removeFromCart  │    │ getUserOrders       │
-  │ updateProduct   │  │ clearCart       │    │ updateOrderStatus   │
-  │ deleteProduct   │  │                 │    │ getAllOrders (admin) │
-  └────────┬────────┘  └────────┬────────┘    └──────────┬──────────┘
-           │                    │                         │
-           ▼                    ▼                         ▼
-  ┌─────────────────┐  ┌─────────────────┐    ┌─────────────────────┐
-  │  Products       │  │  Carts          │    │  Orders             │
-  │  DynamoDB Table │  │  DynamoDB Table │    │  DynamoDB Table     │
-  └─────────────────┘  └─────────────────┘    └─────────────────────┘
-           │                    │                         │
-           └────────────────────┴─────────────────────────┘
-                                │
-                                ▼
-                   ┌────────────────────────┐
-                   │   AWS X-Ray Tracing    │
-                   │   (all services)       │
-                   └────────────────────────┘
-```
+<p align="center">
+  <img src="docs/architecture/microservice.png" alt="Microservices Architecture" width="1000">
+</p>
 
 ---
 
@@ -847,11 +756,16 @@ test-user
 ```bash
 chmod +x smoke-test.sh
 ./smoke-test.sh
-✅ Expected Output
+```
+
+### ✅ Expected Output
+
+```text
 Status: 200
 Status: 201
 ...
 🚀 Smoke Test Completed
+```
 
 ---
 
