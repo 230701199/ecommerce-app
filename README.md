@@ -351,11 +351,17 @@ Supported Status Values:
 
 ## 🗄️ DynamoDB Design
 
-DynamoDB is the primary data store for all three microservices. Each service owns its own table, and only the table primary key schemas are declared in Terraform.
+DynamoDB is the primary data store for NexMart.
+
+The application follows a database-per-service pattern where each microservice owns its own DynamoDB table.
 
 ### Design Philosophy
 
-The current Terraform configuration defines dedicated tables for products, carts, and orders using on-demand billing. Non-key attributes are stored by the application at runtime.
+- Separate DynamoDB table for each microservice
+- On-demand billing (PAY_PER_REQUEST)
+- Simple primary key design
+- No Global Secondary Indexes (GSI)
+- Non-key attributes are managed by the application
 
 ---
 
@@ -363,7 +369,7 @@ The current Terraform configuration defines dedicated tables for products, carts
 
 | Attribute | Type | Notes |
 |---|---|---|
-| `id` (PK) | Number | Primary partition key |
+| `id` (PK) | Number | Unique product identifier |
 
 ---
 
@@ -371,7 +377,7 @@ The current Terraform configuration defines dedicated tables for products, carts
 
 | Attribute | Type | Notes |
 |---|---|---|
-| `userId` (PK) | String | Cognito `sub` claim or application user identifier |
+| `userId` (PK) | String | Cognito user identifier (`sub`) |
 | `productId` (SK) | String | Product identifier |
 
 ---
@@ -380,11 +386,13 @@ The current Terraform configuration defines dedicated tables for products, carts
 
 | Attribute | Type | Notes |
 |---|---|---|
-| `orderId` (PK) | String | Primary partition key |
+| `orderId` (PK) | String | Unique order identifier |
 
 ---
 
-No Global Secondary Indexes are defined in `eccommerce-terraform/terraform/dynamodb.tf`.
+No Global Secondary Indexes (GSI) are currently defined in `eccommerce-terraform/terraform/dynamodb.tf`.
+
+---
 
 ## 📊 Observability & Monitoring
 
