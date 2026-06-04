@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const AWS = require('aws-sdk');
 const serverless = require('serverless-http');
+const { recordCartItemAdded } = require('./business-metrics');
 
 const app = express();
 app.use(express.json());
@@ -36,6 +37,17 @@ app.post('/cart', async (req, res) => {
   const item = { userId, productId, quantity: newQuantity };
 
   await dynamo.put({ TableName: TABLE, Item: item }).promise();
+
+  // Record custom business metric
+  try {
+    await recordCartItemAdded({
+      userId,
+      productId,
+      quantity
+    });
+  } catch (metricErr) {
+    console.error("Failed to record CartItemAdded metric:", metricErr);
+  }
 
   res.status(201).json(item);
 });

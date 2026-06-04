@@ -8,6 +8,7 @@ const {
   reduceProductStock
 } = require('../services/orderService');
 const { getUserEmail } = require('../services/cognitoService');
+const { recordOrderPlaced } = require('../business-metrics');
 
 // Health check
 function healthCheck(req, res) {
@@ -98,6 +99,17 @@ async function createOrderHandler(req, res) {
   // Save order
   try {
     const order = await createOrder(userId, items, totalAmount);
+
+    // Record custom business metric
+    try {
+      await recordOrderPlaced({
+        orderId: order.orderId,
+        userId: order.userId,
+        totalAmount: order.totalAmount
+      });
+    } catch (metricErr) {
+      console.error("Failed to record OrderPlaced metric:", metricErr);
+    }
 
     // 🔥 REDUCE STOCK AFTER ORDER
     try {

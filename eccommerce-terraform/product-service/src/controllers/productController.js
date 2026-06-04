@@ -1,5 +1,6 @@
 const AWS = require('aws-sdk');
 const { asyncHandler } = require('../utils/asyncHandler');
+const { recordProductCreated } = require('../business-metrics');
 
 const dynamo = new AWS.DynamoDB.DocumentClient({
   region: 'ap-southeast-1'
@@ -108,6 +109,16 @@ const addProduct = asyncHandler(async (req, res) => {
     TableName: TABLE,
     Item: product
   }).promise();
+
+  // Record custom business metric
+  try {
+    await recordProductCreated({
+      productId: product.id,
+      category: product.category
+    });
+  } catch (metricErr) {
+    console.error("Failed to record ProductCreated metric:", metricErr);
+  }
 
   return res.status(201).json({
     data: product,

@@ -75,6 +75,22 @@
         <span>Don't have an account?</span>
         <a href="signup.html" class="auth-link">Create one</a>
       </div>
+      <div class="info-card">
+  <h3>🔐 Role-Based Access Control</h3>
+  <p>
+    NexMart uses Amazon Cognito User Groups for authorization.
+  </p>
+
+  <ul>
+    <li><strong>Customer:</strong> Browse products, manage cart, place orders.</li>
+    <li><strong>Admin:</strong> Manage products, view all orders, update order status.</li>
+  </ul>
+
+  <p>
+    Admin features are protected using Cognito JWT Authorization and the
+    <strong>admin</strong> Cognito group.
+  </p>
+</div>
 
     </div><!-- /.auth-card -->
 
@@ -158,6 +174,7 @@
         btn.setAttribute("aria-label", "Show password");
       }
     }
+     
   </script>
 </body>
 </html>

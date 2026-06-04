@@ -1714,3 +1714,20 @@ select:focus {
   color: #a0fff0;
   box-shadow: var(--glow-cyan);
 }
+.info-card {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  font-size: 14px;
+}
+
+.info-card h3 {
+  margin-bottom: 10px;
+}
+
+.info-card ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
