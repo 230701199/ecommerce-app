@@ -207,6 +207,7 @@ function filterCategory(category) {
 function filterProducts() {
   const category = document.getElementById("categoryFilter").value;
   const searchVal = (document.getElementById("productSearchInput")?.value || "").toLowerCase().trim();
+  const sortBy = document.getElementById("productSort")?.value || "default";
 
   let filtered = ALL_PRODUCTS;
 
@@ -218,7 +219,27 @@ function filterProducts() {
     filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchVal));
   }
 
-  renderProducts(filtered);
+  let sorted = [...filtered];
+
+  if (sortBy === "price-asc") {
+    sorted.sort((a, b) => {
+      const pA = a.discount > 0 && a.finalPrice !== undefined ? a.finalPrice : a.price;
+      const pB = b.discount > 0 && b.finalPrice !== undefined ? b.finalPrice : b.price;
+      return (Number(pA) || 0) - (Number(pB) || 0);
+    });
+  } else if (sortBy === "price-desc") {
+    sorted.sort((a, b) => {
+      const pA = a.discount > 0 && a.finalPrice !== undefined ? a.finalPrice : a.price;
+      const pB = b.discount > 0 && b.finalPrice !== undefined ? b.finalPrice : b.price;
+      return (Number(pB) || 0) - (Number(pA) || 0);
+    });
+  } else if (sortBy === "name-asc") {
+    sorted.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  } else if (sortBy === "name-desc") {
+    sorted.sort((a, b) => (b.name || "").localeCompare(a.name || ""));
+  }
+
+  renderProducts(sorted);
 }
 
 async function addToCart(productId) {
