@@ -176,7 +176,12 @@ function renderProducts(products) {
       ? `<div class="card-stock${outOfStock ? ' out' : ''}">Stock: ${p.stock !== undefined ? p.stock : 'N/A'}</div>`
       : "";
 
+    const imgHtml = p.imageUrl
+      ? `<div class="card-image-wrap"><img src="${p.imageUrl}" alt="${p.name}" class="card-image" onerror="this.style.display='none'; this.parentElement.style.display='none';" /></div>`
+      : "";
+
     div.innerHTML = `
+      ${imgHtml}
       <span class="card-emoji">${getEmoji(p.category)}</span>
       ${p.category ? `<span class="card-category">${p.category}</span>` : ""}
       <h3>${p.name}</h3>
@@ -397,6 +402,7 @@ function openModal() {
   document.getElementById("modal-category").value = "";
   document.getElementById("modal-stock").value = "";
   document.getElementById("modal-description").value = "";
+  document.getElementById("modal-imageurl").value = "";
   document.getElementById("modal-overlay").classList.add("open");
   setTimeout(() => document.getElementById("modal-name").focus(), 100);
 }
@@ -422,6 +428,7 @@ async function submitProduct() {
   const category = document.getElementById("modal-category").value.trim();
   const stock = Number(document.getElementById("modal-stock").value);
   const description = document.getElementById("modal-description").value.trim();
+  const imageUrl = document.getElementById("modal-imageurl").value.trim();
   
   if (!name || !price || !category) {
     showAlert("Please fill in all fields", "error");
@@ -435,7 +442,7 @@ async function submitProduct() {
       "Content-Type": "application/json",
       ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
     },
-    body: JSON.stringify({ name, price, category, stock, description })
+    body: JSON.stringify({ name, price, category, stock, description, imageUrl })
   });
 
   closeModal();
@@ -468,6 +475,7 @@ function editProduct(id) {
   document.getElementById("edit-modal-category").value = p.category || "";
   document.getElementById("edit-modal-stock").value = p.stock !== undefined ? p.stock : "";
   document.getElementById("edit-modal-description").value = p.description || "";
+  document.getElementById("edit-modal-imageurl").value = p.imageUrl || "";
   document.getElementById("edit-modal-discount").value = p.discount || 0;
 
   document.getElementById("edit-modal-overlay").classList.add("open");
@@ -491,6 +499,7 @@ async function submitEditProduct() {
   const category = document.getElementById("edit-modal-category").value.trim();
   const stock = Number(document.getElementById("edit-modal-stock").value);
   const description = document.getElementById("edit-modal-description").value.trim();
+  const imageUrl = document.getElementById("edit-modal-imageurl").value.trim();
   const discount = document.getElementById("edit-modal-discount").value;
   if (!name || !price || !category) {
     showAlert("Please fill in all required fields", "error");
@@ -504,7 +513,7 @@ async function submitEditProduct() {
       "Content-Type": "application/json",
       ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
     },
-    body: JSON.stringify({ name, price, category, stock, description,discount: Number(discount || 0) })
+    body: JSON.stringify({ name, price, category, stock, description, imageUrl, discount: Number(discount || 0) })
   });
 
   closeEditModal();

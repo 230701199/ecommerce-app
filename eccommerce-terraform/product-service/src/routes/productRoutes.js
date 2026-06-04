@@ -10,6 +10,7 @@ router.post(
   [
     body('name').isString().notEmpty().withMessage('name is required'),
     body('description').optional().isString(),
+    body('imageUrl').optional().isString(),
     body('price').isFloat({ gt: 0 }).withMessage('price must be a positive number'),
     body('stock').isInt({ min: 0 }).withMessage('stock must be >= 0'),
     body('category').isString().notEmpty().withMessage('category is required')

@@ -86,7 +86,7 @@ const groupList = Array.isArray(groups)
 const addProduct = asyncHandler(async (req, res) => {
   requireAdmin(req); // Cognito Admin Authorization
 
-  const { name, description, price, stock, category,discount } = req.body;
+  const { name, description, price, stock, category, discount, imageUrl } = req.body;
 
   if (!name || !price || !category) {
     res.status(400);
@@ -104,6 +104,10 @@ const addProduct = asyncHandler(async (req, res) => {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   };
+
+  if (imageUrl !== undefined) {
+    product.imageUrl = imageUrl;
+  }
 
   await dynamo.put({
     TableName: TABLE,
@@ -192,7 +196,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   requireAdmin(req); // Cognito Admin Authorization
 
   const id = Number(req.params.id);
-  const { stock, price, name, category, description,discount } = req.body;
+  const { stock, price, name, category, description, discount, imageUrl } = req.body;
 
   const updateExp = [];
   const values = {};
@@ -228,10 +232,15 @@ const updateProduct = asyncHandler(async (req, res) => {
     names["#description"] = "description";
   }
   if (discount !== undefined) {
-  updateExp.push("#discount = :dsc");
-  values[":dsc"] = Number(discount);
-  names["#discount"] = "discount";
-}
+    updateExp.push("#discount = :dsc");
+    values[":dsc"] = Number(discount);
+    names["#discount"] = "discount";
+  }
+  if (imageUrl !== undefined) {
+    updateExp.push("#imageUrl = :img");
+    values[":img"] = imageUrl;
+    names["#imageUrl"] = "imageUrl";
+  }
 
   // ❗ prevent empty update crash
   if (updateExp.length === 0) {
