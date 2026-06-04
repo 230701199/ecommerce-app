@@ -204,6 +204,23 @@ function filterCategory(category) {
   else renderProducts(ALL_PRODUCTS.filter(p => p.category === category));
 }
 
+function filterProducts() {
+  const category = document.getElementById("categoryFilter").value;
+  const searchVal = (document.getElementById("productSearchInput")?.value || "").toLowerCase().trim();
+
+  let filtered = ALL_PRODUCTS;
+
+  if (category !== "all") {
+    filtered = filtered.filter(p => p.category === category);
+  }
+
+  if (searchVal) {
+    filtered = filtered.filter(p => p.name && p.name.toLowerCase().includes(searchVal));
+  }
+
+  renderProducts(filtered);
+}
+
 async function addToCart(productId) {
   await fetch(API + "/cart", {
     method: "POST",

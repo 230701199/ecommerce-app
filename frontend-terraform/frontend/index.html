@@ -187,7 +187,8 @@
     <h2 class="section-title">All <span class="accent">Products</span></h2>
     <div style="display:flex;align-items:center;gap:12px;">
       <button id="add-product-btn" onclick="openModal()">➕ Add Product</button>
-      <select id="categoryFilter" onchange="filterCategory(this.value)">
+      <input type="text" id="productSearchInput" placeholder="🔍 Search products..." oninput="filterProducts()" style="padding: 8px 12px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.2); font-size: 14px; background: rgba(255, 255, 255, 0.05); color: #fff; font-family: inherit;" />
+      <select id="categoryFilter" onchange="filterProducts()">
         <option value="all">All Categories</option>
       </select>
     </div>
