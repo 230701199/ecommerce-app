@@ -68,7 +68,7 @@ The platform is built around the principle of **zero server management**: there 
 
 ### Frontend
 
-https://d32dvut05ll57l.cloudfront.net
+https://d8kithip31g8l.cloudfront.net
 
 ### Backend
 
