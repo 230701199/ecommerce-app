@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — NexMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="checkout.css" />
+
+  <!-- Auth guard: redirect unauthenticated users to login -->
+  <script>
+    (function earlyAuthGuard() {
+      var raw = localStorage.getItem("cognito_tokens");
+      if (!raw) {
+        window.location.replace("login.html");
+        return;
+      }
+      try {
+        var tokens  = JSON.parse(raw);
+        var idToken = tokens.id_token;
+        if (!idToken) {
+          if (!tokens.refresh_token) {
+            window.location.replace("login.html");
+          }
+          return;
+        }
+        var parts   = idToken.split(".");
+        var payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+        var expired = Date.now() >= (payload.exp - 30) * 1000;
+        if (expired && !tokens.refresh_token) {
+          localStorage.removeItem("cognito_tokens");
+          window.location.replace("login.html");
+        }
+      } catch (e) {
+        localStorage.removeItem("cognito_tokens");
+        window.location.replace("login.html");
+      }
+    })();
+  </script>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <a href="index.html" style="text-decoration:none;color:inherit;">
+        <span class="logo-n">N</span>EXM<span class="logo-x">A</span>RT<span class="logo-dot"></span>
+      </a>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="window.location.href='index.html'" id="nav-products">🛍️ Products</button>
+      <button onclick="window.location.href='index.html'" id="nav-cart">🛒 Cart</button>
+      <button onclick="window.location.href='index.html'" id="nav-orders">📦 Orders</button>
+    </div>
+  </header>
+
+  <div id="alert-box"></div>
+
+  <main>
+    <div class="checkout-container">
+
+      <!-- Progress Indicator -->
+      <div class="checkout-progress" id="checkout-progress">
+        <div class="checkout-progress-step active" data-step="1">
+          <span class="checkout-progress-number">1</span>
+          <span>Cart</span>
+        </div>
+        <div class="checkout-progress-connector" data-connector="1"></div>
+        <div class="checkout-progress-step" data-step="2">
+          <span class="checkout-progress-number">2</span>
+          <span>Address</span>
+        </div>
+        <div class="checkout-progress-connector" data-connector="2"></div>
+        <div class="checkout-progress-step" data-step="3">
+          <span class="checkout-progress-number">3</span>
+          <span>Payment</span>
+        </div>
+        <div class="checkout-progress-connector" data-connector="3"></div>
+        <div class="checkout-progress-step" data-step="4">
+          <span class="checkout-progress-number">4</span>
+          <span>Confirm</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Cart Review -->
+      <div id="step-1" class="checkout-step-panel active" data-step="1">
+        <div class="checkout-step-info">
+          <div class="checkout-step-label">Step 1 of 4</div>
+          <div class="checkout-step-title">Cart <span class="accent">Review</span></div>
+        </div>
+        <div class="checkout-panel-card">
+          <div id="checkout-cart-items">
+            <!-- Cart items rendered by checkout.js -->
+          </div>
+          <div id="checkout-cart-total">
+            <!-- Cart total rendered by checkout.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Delivery Address -->
+      <div id="step-2" class="checkout-step-panel" data-step="2">
+        <div class="checkout-step-info">
+          <div class="checkout-step-label">Step 2 of 4</div>
+          <div class="checkout-step-title">Delivery <span class="accent">Address</span></div>
+        </div>
+        <div class="checkout-panel-card">
+          <button type="button" id="btn-use-location" class="checkout-btn-location" onclick="detectLocation()">
+            📍 Use Current Location
+            <span class="checkout-spinner" id="location-spinner" style="display:none;"></span>
+          </button>
+
+          <div class="checkout-form-group">
+            <label for="address-street">Street Address *</label>
+            <input type="text" id="address-street" maxlength="200" placeholder="e.g. 123 Main Street, Apt 4B" />
+            <span class="checkout-error-message" id="error-street"></span>
+          </div>
+          <div class="checkout-form-row">
+            <div class="checkout-form-group">
+              <label for="address-city">City *</label>
+              <input type="text" id="address-city" maxlength="100" placeholder="e.g. Mumbai" />
+              <span class="checkout-error-message" id="error-city"></span>
+            </div>
+            <div class="checkout-form-group">
+              <label for="address-state">State *</label>
+              <input type="text" id="address-state" maxlength="100" placeholder="e.g. Maharashtra" />
+              <span class="checkout-error-message" id="error-state"></span>
+            </div>
+          </div>
+          <div class="checkout-form-row">
+            <div class="checkout-form-group">
+              <label for="address-pincode">Pincode *</label>
+              <input type="text" id="address-pincode" maxlength="6" placeholder="e.g. 400001" />
+              <span class="checkout-error-message" id="error-pincode"></span>
+            </div>
+            <div class="checkout-form-group">
+              <label for="address-landmark">Landmark (optional)</label>
+              <input type="text" id="address-landmark" maxlength="200" placeholder="e.g. Near Central Park" />
+              <span class="checkout-error-message" id="error-landmark"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment Method -->
+      <div id="step-3" class="checkout-step-panel" data-step="3">
+        <div class="checkout-step-info">
+          <div class="checkout-step-label">Step 3 of 4</div>
+          <div class="checkout-step-title">Payment <span class="accent">Method</span></div>
+        </div>
+        <div class="checkout-panel-card">
+          <div class="checkout-payment-options">
+            <div class="checkout-payment-option" id="payment-option-cod" data-method="COD">
+              <div class="checkout-payment-radio"></div>
+              <div>
+                <div class="checkout-payment-label">💵 Cash on Delivery</div>
+                <div class="checkout-payment-desc">Pay when your order arrives</div>
+              </div>
+              <input type="radio" name="payment-method" value="COD" style="display:none;" />
+            </div>
+            <div class="checkout-payment-option" id="payment-option-upi" data-method="UPI">
+              <div class="checkout-payment-radio"></div>
+              <div>
+                <div class="checkout-payment-label">📱 UPI Payment</div>
+                <div class="checkout-payment-desc">Pay instantly via UPI</div>
+              </div>
+              <input type="radio" name="payment-method" value="UPI" style="display:none;" />
+            </div>
+          </div>
+          <span class="checkout-error-message" id="error-payment-method" style="display:none;"></span>
+
+          <!-- COD note (shown when COD selected) -->
+          <div id="cod-note" class="checkout-payment-note" style="display:none;">
+            💵 Payment will be collected at the time of delivery.
+          </div>
+
+          <!-- UPI ID input (shown when UPI selected) -->
+          <div id="upi-section" style="display:none;">
+            <div class="checkout-form-group">
+              <label for="upi-id">UPI ID *</label>
+              <input type="text" id="upi-id" maxlength="50" placeholder="e.g. yourname@upi" />
+              <span class="checkout-error-message" id="error-upi-id"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Order Summary -->
+      <div id="step-4" class="checkout-step-panel" data-step="4">
+        <div class="checkout-step-info">
+          <div class="checkout-step-label">Step 4 of 4</div>
+          <div class="checkout-step-title">Order <span class="accent">Summary</span></div>
+        </div>
+        <div class="checkout-panel-card">
+          <div id="order-summary-content">
+            <!-- Summary rendered by checkout.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="checkout-nav">
+        <button type="button" id="btn-back" class="checkout-btn-back" onclick="navigatePrev()" style="display:none;">
+          ← Back
+        </button>
+        <div style="flex:1;"></div>
+        <button type="button" id="btn-next" class="checkout-btn-next" onclick="navigateNext()">
+          <span>Next →</span>
+        </button>
+        <button type="button" id="btn-confirm" class="checkout-btn-confirm" onclick="submitOrder()" style="display:none;">
+          <span class="btn-confirm-label">✅ Confirm Order</span>
+          <span class="checkout-spinner btn-confirm-spinner" style="display:none;"></span>
+        </button>
+      </div>
+
+    </div><!-- /.checkout-container -->
+  </main>
+
+  <script src="auth.js"></script>
+  <script src="checkout.js"></script>
+</body>
+</html>

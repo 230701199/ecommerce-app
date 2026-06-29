@@ -1,6 +1,10 @@
 // ✅ MOCK FIRST (VERY IMPORTANT)
 jest.mock('aws-sdk');
 jest.mock('axios');
+jest.mock('@aws-sdk/client-cloudwatch', () => ({
+  CloudWatchClient: jest.fn(() => ({ send: jest.fn() })),
+  PutMetricDataCommand: jest.fn(),
+}));
 
 const AWS = require('aws-sdk');
 const axios = require('axios');

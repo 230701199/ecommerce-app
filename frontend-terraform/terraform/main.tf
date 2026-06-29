@@ -94,6 +94,35 @@ resource "aws_s3_object" "verify_html" {
   etag = filemd5("${path.root}/../frontend/verify.html")
 }
 
+# ── Checkout UI files ────────────────────────────────────────────────────────
+
+resource "aws_s3_object" "checkout_html" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "checkout.html"
+  source       = "${path.root}/../frontend/checkout.html"
+  content_type = "text/html"
+
+  etag = filemd5("${path.root}/../frontend/checkout.html")
+}
+
+resource "aws_s3_object" "checkout_css" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "checkout.css"
+  source       = "${path.root}/../frontend/checkout.css"
+  content_type = "text/css"
+
+  etag = filemd5("${path.root}/../frontend/checkout.css")
+}
+
+resource "aws_s3_object" "checkout_js" {
+  bucket       = aws_s3_bucket.frontend.id
+  key          = "checkout.js"
+  source       = "${path.root}/../frontend/checkout.js"
+  content_type = "application/javascript"
+
+  etag = filemd5("${path.root}/../frontend/checkout.js")
+}
+
 resource "aws_s3_bucket_policy" "cloudfront_access" {
   bucket = aws_s3_bucket.frontend.id
 

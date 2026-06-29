@@ -7,11 +7,26 @@ const {
   getAdminOrders,
   updateOrderStatus
 } = require('./controllers/orderController');
+const { checkoutHandler } = require('./controllers/checkoutController');
+const { checkoutValidator } = require('./validators/checkoutValidator');
 
 const app = express();
 const PORT = process.env.PORT || 3003;
 
 app.use(express.json());
+
+/**
+ * JWT auth middleware.
+ * In production, JWT validation is handled by API Gateway's JWT authorizer.
+ * This middleware simulates that behaviour by requiring an Authorization header.
+ */
+function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
 
 app.get('/', healthCheck);
 
@@ -24,6 +39,8 @@ app.post('/orders', createOrderHandler);
 app.get('/admin/orders', getAdminOrders);
 
 app.put('/admin/orders/:orderId/status', updateOrderStatus);
+
+app.post('/orders/checkout', authMiddleware, ...checkoutValidator, checkoutHandler);
 
 // Error handler
 app.use((err, req, res, next) => {

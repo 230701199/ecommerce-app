@@ -11,11 +11,14 @@
     "aws-sdk": "^2.1693.0",
     "axios": "^1.14.0",
     "express": "^4.21.2",
+    "express-validator": "^7.3.2",
     "jest": "^30.3.0",
     "serverless-http": "^4.0.0",
     "supertest": "^7.2.2"
   },
   "devDependencies": {
+    "@aws-sdk/client-cloudwatch": "^3.1075.0",
+    "fast-check": "^4.8.0",
     "nodemon": "^3.1.10"
   }
 }

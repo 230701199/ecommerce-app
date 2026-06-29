@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 
 const { productRoutes } = require('./routes/productRoutes');
+
 const { notFound } = require('./middleware/notFound');
 const { errorHandler } = require('./middleware/errorHandler');
 
@@ -31,7 +32,7 @@ function createApp() {
 
   app.get('/health', (req, res) => res.json({ status: 'ok' }));
   app.use(productRoutes);
-
+  
   app.use(notFound);
   app.use(errorHandler);
   return app;

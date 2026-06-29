@@ -292,7 +292,7 @@ async function loadCart() {
         <div class="label">Total Amount</div>
         <div class="amount">₹${total}</div>
       </div>
-      <button class="btn-order" onclick="placeOrder()"><span>🚀 Place Order Now</span></button>
+      <button class="btn-order" onclick="proceedToCheckout()"><span>🛒 Proceed to Checkout</span></button>
     </div>
   `;
 }
@@ -392,6 +392,38 @@ async function placeOrder() {
   } catch (err) {
     console.error(err);
     showAlert("Something went wrong ❌");
+  }
+}
+
+/* ── CHECKOUT NAVIGATION ── */
+
+/**
+ * Navigate to the checkout page with cart review step active.
+ * Requirement 12.1, 12.2
+ */
+function proceedToCheckout() {
+  window.location.href = "checkout.html";
+}
+
+/**
+ * Handle URL hash and query parameters on page load.
+ * Supports #cart hash to show cart section, and msg=cart_empty to show empty cart alert.
+ * Requirement 12.3, 12.4
+ */
+function handleUrlNavigation() {
+  var hash = window.location.hash;
+  var params = new URLSearchParams(window.location.search);
+
+  // Show empty cart message if redirected from checkout
+  if (params.get("msg") === "cart_empty") {
+    showAlert("Your cart is empty. Please add items before checkout.", "error");
+    // Clean the URL to avoid showing the message again on refresh
+    window.history.replaceState({}, document.title, window.location.pathname + (hash || ""));
+  }
+
+  // Navigate to cart section if hash is #cart
+  if (hash === "#cart") {
+    showCart();
   }
 }
 
@@ -538,6 +570,7 @@ async function submitEditProduct() {
   const user = await requireAuth();   // gate: redirects to login.html if not authed
   updateAuthUI(user);                 // show correct header state immediately
   await loadProducts();               // then fetch and render the product grid
+  handleUrlNavigation();              // handle URL hash/params for checkout navigation
 })();
 
 

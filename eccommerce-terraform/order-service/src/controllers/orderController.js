@@ -30,10 +30,27 @@ async function getAllOrders(req, res) {
 async function getUserOrders(req, res) {
   try {
     const result = await dynamo.scan({ TableName: ORDER_TABLE }).promise();
-    const filtered = result.Items.filter(
-      (o) => o.userId === req.params.userId
+    const items = result.Items || [];
+
+    // Filter by userId and exclude IDEMPOTENCY# prefixed records
+    const filtered = items.filter(
+      (o) => o.userId === req.params.userId && !o.orderId.startsWith('IDEMPOTENCY#')
     );
-    res.json(filtered);
+
+    // Return orders with all enhanced fields
+    const orders = filtered.map((order) => ({
+      orderId: order.orderId,
+      userId: order.userId,
+      items: order.items || [],
+      deliveryAddress: order.deliveryAddress || null,
+      paymentMethod: order.paymentMethod || null,
+      paymentDetails: order.paymentDetails || {},
+      totalAmount: order.totalAmount || 0,
+      status: order.status || 'CREATED',
+      createdAt: order.createdAt || null
+    }));
+
+    res.json(orders);
   } catch (err) {
     console.error("Fetch User Orders Error:", err);
     res.status(500).json({ error: 'Failed to fetch user orders' });
